@@ -27,11 +27,18 @@ object UpdateManager {
                     setRequestProperty("User-Agent", "AudioTools-Android")
                 }
                 connection.connect()
-                if (connection.responseCode !in 200..299) {
+                val code = connection.responseCode
+                if (code == HttpURLConnection.HTTP_NOT_FOUND) {
+                    connection.disconnect()
+                    callback(Result.success(null))
+                    return@execute
+                }
+                if (code !in 200..299) {
                     connection.disconnect()
                     callback(Result.failure(IllegalStateException("HTTP error")))
                     return@execute
                 }
+
                 val body = connection.inputStream.bufferedReader().use { it.readText() }
                 connection.disconnect()
 
@@ -80,7 +87,8 @@ object UpdateManager {
             setTitle("Audio Tools " + info.versionName)
             setDescription("A transferir a atualização")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            setDestinationInExternalPublicDir(
+            setDestinationInExternalFilesDir(
+                context,
                 Environment.DIRECTORY_DOWNLOADS,
                 "AudioTools-" + info.versionName + ".apk"
             )
