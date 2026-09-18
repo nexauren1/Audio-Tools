@@ -35,5 +35,6 @@ dependencies {
     implementation("androidx.core:core-ktx:1.18.0")
     implementation("androidx.activity:activity-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.8.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.1")
     implementation("com.google.android.material:material:1.14.0")
 }
