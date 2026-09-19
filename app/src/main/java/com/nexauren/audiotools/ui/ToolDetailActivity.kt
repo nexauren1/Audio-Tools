@@ -125,6 +125,12 @@ class ToolDetailActivity : ComponentActivity() {
             finish()
             return
         }
+
+        UsageStore.record(
+            this,
+            tool.id
+        )
+
         buildUi(tool)
     }
 
