@@ -292,7 +292,42 @@ class AuthActivity : ComponentActivity() {
             false,
             R.color.audio_blue
         )
-        googleButton?.setOnClickListener { signInWithGoogle() }
+
+        val googleLabel =
+            "G   " +
+                AuthStrings.t(
+                    this,
+                    "continue_google"
+                )
+
+        googleButton?.text =
+            android.text.SpannableString(
+                googleLabel
+            ).apply {
+                setSpan(
+                    android.text.style.ForegroundColorSpan(
+                        ContextCompat.getColor(
+                            this@AuthActivity,
+                            R.color.audio_blue
+                        )
+                    ),
+                    0,
+                    1,
+                    android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                setSpan(
+                    android.text.style.StyleSpan(
+                        android.graphics.Typeface.BOLD
+                    ),
+                    0,
+                    1,
+                    android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+        googleButton?.setOnClickListener {
+            signInWithGoogle()
+        }
         googleButton?.let { content.addView(it) }
         content.addView(ViewKit.spacer(this, 8))
 
