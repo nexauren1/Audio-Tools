@@ -869,10 +869,10 @@ class ToolDetailActivity : ComponentActivity() {
                 }
             }
             require(trackIndex >= 0 && trackFormat != null)
-            val mime = trackFormat!!.getString(MediaFormat.KEY_MIME) ?: error("no mime")
-            decoder = MediaCodec.createDecoderByType(mime)
-            decoder!!.configure(trackFormat, null, null, 0)
-            decoder!!.start()
+            val codec = MediaCodec.createDecoderByType(trackFormat!!.getString(MediaFormat.KEY_MIME) ?: error("no mime"))
+            decoder = codec
+            codec.configure(trackFormat, null, null, 0)
+            codec.start()
             extractor.selectTrack(trackIndex)
 
             RandomAccessFile(output, "rw").use { raf ->
@@ -886,32 +886,32 @@ class ToolDetailActivity : ComponentActivity() {
 
                 while (!outputDone) {
                     if (!inputDone) {
-                        val inputIndex = decoder.dequeueInputBuffer(10_000)
+                        val inputIndex = codec.dequeueInputBuffer(10_000)
                         if (inputIndex >= 0) {
-                            val inBuffer = decoder.getInputBuffer(inputIndex) ?: error("no decoder input")
+                            val inBuffer = codec.getInputBuffer(inputIndex) ?: error("no decoder input")
                             val sampleTime = extractor.sampleTime
                             if (sampleTime < 0L) {
-                                decoder.queueInputBuffer(inputIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                codec.queueInputBuffer(inputIndex, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                                 inputDone = true
                             } else {
                                 val size = extractor.readSampleData(inBuffer, 0)
-                                decoder.queueInputBuffer(inputIndex, 0, size.coerceAtLeast(0), sampleTime, extractor.sampleFlags)
+                                codec.queueInputBuffer(inputIndex, 0, size.coerceAtLeast(0), sampleTime, extractor.sampleFlags)
                                 extractor.advance()
                             }
                         }
                     }
 
                     val info = MediaCodec.BufferInfo()
-                    val outputIndex = decoder.dequeueOutputBuffer(info, 10_000)
+                    val outputIndex = codec.dequeueOutputBuffer(info, 10_000)
                     when {
                         outputIndex == MediaCodec.INFO_TRY_AGAIN_LATER -> Unit
                         outputIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                            val f = decoder.outputFormat
+                            val f = codec.outputFormat
                             sampleRate = f.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                             channels = f.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
                         }
                         outputIndex >= 0 -> {
-                            val out = decoder.getOutputBuffer(outputIndex)
+                            val out = codec.getOutputBuffer(outputIndex)
                             if (out != null && info.size > 0) {
                                 out.position(info.offset)
                                 out.limit(info.offset + info.size)
@@ -921,7 +921,7 @@ class ToolDetailActivity : ComponentActivity() {
                                 dataBytes += bytes.size
                             }
                             outputDone = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-                            decoder.releaseOutputBuffer(outputIndex, false)
+                            codec.releaseOutputBuffer(outputIndex, false)
                         }
                     }
                 }
