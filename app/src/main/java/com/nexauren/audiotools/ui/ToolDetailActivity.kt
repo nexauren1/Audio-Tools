@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
@@ -72,6 +73,7 @@ class ToolDetailActivity : ComponentActivity() {
     private var statusView: TextView? = null
     private var primaryAction: MaterialButton? = null
     private var playbackAction: MaterialButton? = null
+    private var signalPreview: SignalPreviewView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,37 +90,67 @@ class ToolDetailActivity : ComponentActivity() {
         stopTimer()
         releasePlayer()
         releaseRecorder()
+        signalPreview?.stop()
         worker.shutdownNow()
         super.onDestroy()
     }
 
     private fun buildUi(tool: AudioTool) {
         val root = ViewKit.page(this)
+        val accent = accentFor(tool.id)
 
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        header.addView(ViewKit.button(this, "‹", false).apply {
-            minWidth = ViewKit.dp(this@ToolDetailActivity, 50)
-            minHeight = ViewKit.dp(this@ToolDetailActivity, 50)
+        header.addView(ViewKit.button(this, "‹", false, accent).apply {
+            minWidth = ViewKit.dp(this@ToolDetailActivity, 48)
+            minHeight = ViewKit.dp(this@ToolDetailActivity, 48)
             setOnClickListener { finish() }
         })
         header.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                leftMargin = ViewKit.dp(this@ToolDetailActivity, 13)
+                leftMargin = ViewKit.dp(this@ToolDetailActivity, 12)
             }
             addView(ViewKit.eyebrow(this@ToolDetailActivity, tool.category))
-            addView(ViewKit.title(this@ToolDetailActivity, "Ferramenta " + tool.number, 20f))
+            addView(TextView(this@ToolDetailActivity).apply {
+                text = "FERRAMENTA " + tool.number
+                textSize = 12f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(ContextCompat.getColor(this@ToolDetailActivity, accent))
+            })
         })
+        header.addView(ViewKit.pill(
+            this,
+            when (tool.id) {
+                "recorder" -> "LIVE"
+                "cut" -> "EDIT"
+                else -> "SCAN"
+            },
+            colorRes = accent
+        ))
         root.addView(header)
         root.addView(ViewKit.spacer(this, 22))
-        root.addView(ViewKit.title(this, tool.title, 29f))
-        root.addView(ViewKit.spacer(this, 8))
+        root.addView(ViewKit.title(this, tool.title, 30f))
+        root.addView(ViewKit.spacer(this, 7))
         root.addView(ViewKit.subtitle(this, tool.detail))
 
-        root.addView(ViewKit.spacer(this, 20))
+        root.addView(ViewKit.spacer(this, 16))
+        signalPreview = SignalPreviewView(
+            this,
+            accent,
+            live = tool.id == "recorder"
+        ).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewKit.dp(this@ToolDetailActivity, 128)
+            )
+            if (tool.id != "recorder") start()
+        }
+        root.addView(signalPreview)
+
+        root.addView(ViewKit.spacer(this, 17))
         when (tool.id) {
             "cut" -> buildCutAction(root)
             "recorder" -> buildRecorderAction(root)
@@ -134,7 +166,7 @@ class ToolDetailActivity : ComponentActivity() {
         }
 
         root.addView(ViewKit.spacer(this, 12))
-        val specCard = ViewKit.card(this)
+        val specCard = ViewKit.card(this, accentColorRes = accent)
         val spec = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
@@ -160,7 +192,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun buildCutAction(root: LinearLayout) {
-        val card = ViewKit.card(this)
+        val card = ViewKit.card(this, accentColorRes = R.color.audio_blue)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
@@ -170,7 +202,7 @@ class ToolDetailActivity : ComponentActivity() {
                 ViewKit.dp(this@ToolDetailActivity, 18)
             )
         }
-        content.addView(ViewKit.pill(this, "AAC / M4A", positive = true))
+        content.addView(ViewKit.pill(this, "CORTE DE PRECISÃO", colorRes = R.color.audio_blue))
         content.addView(ViewKit.spacer(this, 12))
 
         statusView = TextView(this).apply {
@@ -181,7 +213,7 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(statusView)
 
         content.addView(ViewKit.spacer(this, 12))
-        content.addView(ViewKit.button(this, "Escolher áudio", true).apply {
+        content.addView(ViewKit.button(this, "Escolher áudio", true, R.color.audio_blue).apply {
             setOnClickListener {
                 filePicker.launch(arrayOf("audio/mp4", "audio/aac", "audio/x-m4a", "audio/*", "video/mp4"))
             }
@@ -207,7 +239,7 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(progress)
         content.addView(ViewKit.spacer(this, 8))
 
-        primaryAction = ViewKit.button(this, "Cortar e guardar", true).apply {
+        primaryAction = ViewKit.button(this, "Cortar e guardar", true, R.color.audio_blue).apply {
             isEnabled = false
             setOnClickListener {
                 val uri = selectedUri ?: return@setOnClickListener
@@ -222,9 +254,12 @@ class ToolDetailActivity : ComponentActivity() {
         }
         content.addView(primaryAction)
 
-        playbackAction = ViewKit.button(this, "Reproduzir resultado", false).apply {
+        playbackAction = ViewKit.button(this, "▶ Ouvir original", false, R.color.audio_blue).apply {
             visibility = MaterialButton.GONE
-            setOnClickListener { lastOutputPath?.let { playFile(File(it)) } }
+            setOnClickListener {
+                lastOutputPath?.let { playFile(File(it)) }
+                    ?: selectedUri?.let { playUri(it) }
+            }
         }
         content.addView(ViewKit.spacer(this, 8))
         content.addView(playbackAction)
@@ -234,7 +269,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun buildRecorderAction(root: LinearLayout) {
-        val card = ViewKit.card(this)
+        val card = ViewKit.card(this, accentColorRes = R.color.audio_red)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
@@ -245,7 +280,7 @@ class ToolDetailActivity : ComponentActivity() {
             )
         }
 
-        content.addView(ViewKit.pill(this, "M4A • AAC", positive = true))
+        content.addView(ViewKit.pill(this, "MONITORIZAÇÃO EM TEMPO REAL", colorRes = R.color.audio_red))
         content.addView(ViewKit.spacer(this, 14))
 
         statusView = TextView(this).apply {
@@ -258,7 +293,7 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(statusView)
 
         content.addView(ViewKit.spacer(this, 14))
-        primaryAction = ViewKit.button(this, "●  Começar gravação", true).apply {
+        primaryAction = ViewKit.button(this, "●  Começar gravação", true, R.color.audio_red).apply {
             setOnClickListener {
                 if (mediaRecorder == null) startRecording() else stopRecording()
             }
@@ -266,7 +301,7 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(primaryAction)
         content.addView(ViewKit.spacer(this, 8))
 
-        playbackAction = ViewKit.button(this, "Reproduzir última gravação", false).apply {
+        playbackAction = ViewKit.button(this, "▶ Reproduzir última gravação", false, R.color.audio_red).apply {
             visibility = MaterialButton.GONE
             setOnClickListener { lastOutputPath?.let { playFile(File(it)) } }
         }
@@ -277,7 +312,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun buildAnalyzerAction(root: LinearLayout) {
-        val card = ViewKit.card(this)
+        val card = ViewKit.card(this, accentColorRes = R.color.audio_yellow)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
@@ -288,7 +323,7 @@ class ToolDetailActivity : ComponentActivity() {
             )
         }
 
-        content.addView(ViewKit.pill(this, "LEITURA LOCAL", positive = true))
+        content.addView(ViewKit.pill(this, "RELATÓRIO TÉCNICO", colorRes = R.color.audio_yellow))
         content.addView(ViewKit.spacer(this, 12))
         statusView = TextView(this).apply {
             text = "Seleciona um áudio para obter o relatório."
@@ -297,12 +332,12 @@ class ToolDetailActivity : ComponentActivity() {
         }
         content.addView(statusView)
         content.addView(ViewKit.spacer(this, 12))
-        content.addView(ViewKit.button(this, "Escolher áudio", true).apply {
+        content.addView(ViewKit.button(this, "Analisar áudio", true, R.color.audio_blue).apply {
             setOnClickListener { filePicker.launch(arrayOf("audio/*", "video/mp4")) }
         })
         content.addView(ViewKit.spacer(this, 14))
 
-        playbackAction = ViewKit.button(this, "Reproduzir áudio", false).apply {
+        playbackAction = ViewKit.button(this, "▶ Reproduzir áudio", false, R.color.audio_yellow).apply {
             visibility = MaterialButton.GONE
             setOnClickListener { selectedUri?.let { playUri(it) } }
         }
@@ -360,6 +395,8 @@ class ToolDetailActivity : ComponentActivity() {
 
     private fun onCutFileSelected(uri: Uri) {
         selectedUri = uri
+        lastOutputPath = null
+        playbackAction?.text = "▶ Ouvir original"
         worker.execute {
             val duration = try { readDuration(uri) } catch (_: Exception) { 0L }
             mainHandler.post {
@@ -389,7 +426,8 @@ class ToolDetailActivity : ComponentActivity() {
                     progress.visibility = ProgressBar.GONE
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = MaterialButton.VISIBLE
-                    statusView?.text = "Pronto. Guardado como " + output.name
+                    playbackAction?.text = "▶ Reproduzir resultado"
+                    statusView?.text = "Pronto • " + formatDuration(endMs - startMs) + " • " + output.name
                 }
             } catch (_: Exception) {
                 mainHandler.post {
@@ -494,17 +532,21 @@ class ToolDetailActivity : ComponentActivity() {
             val sampleRate = audioFormat?.let { intValue(it, MediaFormat.KEY_SAMPLE_RATE) }
 
             return buildString {
-                append("Ficheiro\n")
                 append(displayName(uri))
-                append("\n\nDuração\n")
+                append("\n")
+                append("Duração  •  ")
                 append(formatDuration(durationMs))
-                append("\n\nFormato\n")
+                append("\n")
+                append("Formato  •  ")
                 append(mime)
-                append("\n\nBitrate\n")
+                append("\n")
+                append("Bitrate  •  ")
                 append(if (bitrate != null && bitrate > 0) (bitrate / 1000).toString() + " kbps" else "—")
-                append("\n\nCanais\n")
+                append("\n")
+                append("Canais  •  ")
                 append(channels?.toString() ?: "—")
-                append("\n\nTaxa de amostragem\n")
+                append("\n")
+                append("Amostragem  •  ")
                 append(if (sampleRate != null && sampleRate > 0) sampleRate.toString() + " Hz" else "—")
             }
         } finally {
@@ -557,13 +599,17 @@ class ToolDetailActivity : ComponentActivity() {
             lastOutputPath = output.absolutePath
             recordingStartedAt = System.currentTimeMillis()
             primaryAction?.text = "■  Parar gravação"
-            primaryAction?.setBackgroundColor(ContextCompat.getColor(this, R.color.audio_danger))
+            primaryAction?.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red_dark))
             statusView?.text = "Gravando • 00:00"
+            signalPreview?.start()
             timerRunnable = object : Runnable {
                 override fun run() {
                     val seconds = ((System.currentTimeMillis() - recordingStartedAt) / 1000L).toInt()
+                    val amplitude = try { mediaRecorder?.maxAmplitude ?: 0 } catch (_: Exception) { 0 }
+                    signalPreview?.setLevel((amplitude / 32767f).coerceIn(0f, 1f))
                     statusView?.text = "Gravando • %02d:%02d".format(seconds / 60, seconds % 60)
-                    mainHandler.postDelayed(this, 500)
+                    mainHandler.postDelayed(this, 160)
                 }
             }.also { mainHandler.post(it) }
         } catch (_: Exception) {
@@ -580,7 +626,9 @@ class ToolDetailActivity : ComponentActivity() {
             mediaRecorder?.release()
             mediaRecorder = null
             primaryAction?.text = "●  Começar gravação"
-            primaryAction?.setBackgroundColor(ContextCompat.getColor(this, R.color.audio_primary))
+            primaryAction?.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red))
+            signalPreview?.stop()
             playbackAction?.visibility = MaterialButton.VISIBLE
             statusView?.text = "Gravação guardada no dispositivo."
         } catch (_: Exception) {
@@ -588,7 +636,9 @@ class ToolDetailActivity : ComponentActivity() {
             lastOutputPath?.let { File(it).delete() }
             lastOutputPath = null
             primaryAction?.text = "●  Começar gravação"
-            primaryAction?.setBackgroundColor(ContextCompat.getColor(this, R.color.audio_primary))
+            primaryAction?.backgroundTintList =
+                ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red))
+            signalPreview?.stop()
             statusView?.text = "A gravação foi demasiado curta. Tenta novamente."
         }
     }
@@ -655,10 +705,17 @@ class ToolDetailActivity : ComponentActivity() {
         }
     }
 
+    private fun accentFor(toolId: String): Int = when (toolId) {
+        "cut" -> R.color.audio_blue
+        "recorder" -> R.color.audio_red
+        "analyzer" -> R.color.audio_yellow
+        else -> R.color.audio_blue
+    }
+
     private fun specText(label: String, value: String): TextView =
         TextView(this).apply {
-            text = label + "\n" + value
-            textSize = 13f
+            text = label.uppercase() + "\n" + value
+            textSize = 12.5f
             setTextColor(ContextCompat.getColor(this@ToolDetailActivity, R.color.audio_muted))
         }
 
