@@ -1,30 +1,78 @@
 PRAGMA foreign_keys = ON;
 
-CREATE TABLE IF NOT EXISTS plans (
+DROP TABLE IF EXISTS credit_transactions;
+DROP TABLE IF EXISTS credit_accounts;
+DROP TABLE IF EXISTS paypal_orders;
+DROP TABLE IF EXISTS tool_usage;
+DROP TABLE IF EXISTS plans;
+
+CREATE TABLE plans (
     plan_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     price_usd TEXT NOT NULL DEFAULT '0.00',
     duration_days INTEGER,
-    monthly_credits INTEGER NOT NULL DEFAULT 0,
+    billing_interval TEXT NOT NULL DEFAULT 'NONE',
+    description TEXT NOT NULL DEFAULT '',
+    includes TEXT NOT NULL DEFAULT '[]',
+    paypal_product_id TEXT,
+    paypal_plan_id TEXT,
     active INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
 );
 
-INSERT OR IGNORE INTO plans (
-    plan_id, name, price_usd, duration_days,
-    monthly_credits, active, created_at, updated_at
+INSERT INTO plans (
+    plan_id,
+    name,
+    price_usd,
+    duration_days,
+    billing_interval,
+    description,
+    includes,
+    active,
+    created_at,
+    updated_at
 ) VALUES
-    (
-        'FREE', 'Free', '0.00', NULL,
-        0, 1, unixepoch(), unixepoch()
-    ),
-    (
-        'PRO', 'Pro', '5.00', 30,
-        1000, 1, unixepoch(), unixepoch()
-    );
+(
+    'FREE',
+    'Free',
+    '0.00',
+    NULL,
+    'NONE',
+    'Acesso gratuito às ferramentas disponíveis no plano Free.',
+    '["Ferramentas Free","Processamento local disponível"]',
+    1,
+    unixepoch(),
+    unixepoch()
+),
+(
+    'PRO',
+    'Pro',
+    '5.00',
+    30,
+    'MONTH',
+    'Mais ferramentas e recursos para quem trabalha com áudio com mais frequência.',
+    '["Tudo do Free","Ferramentas Pro","Novos recursos Pro"]',
+    1,
+    unixepoch(),
+    unixepoch()
+),
+(
+    'PREMIUM',
+    'Premium',
+    '10.00',
+    30,
+    'MONTH',
+    'Acesso completo ao Pro e aos recursos Premium do Audio Tools.',
+    '["Tudo do Free","Tudo do Pro","Ferramentas Premium","Novos recursos Premium"]',
+    1,
+    unixepoch(),
+    unixepoch()
+);
 
-CREATE TABLE IF NOT EXISTS entitlements (
+DROP TABLE IF EXISTS entitlements;
+
+CREATE TABLE entitlements (
     firebase_uid TEXT PRIMARY KEY,
     plan TEXT NOT NULL DEFAULT 'FREE',
     starts_at INTEGER,
@@ -32,69 +80,32 @@ CREATE TABLE IF NOT EXISTS entitlements (
     status TEXT NOT NULL DEFAULT 'ACTIVE',
     source TEXT NOT NULL DEFAULT 'SYSTEM',
     updated_at INTEGER NOT NULL,
-    last_order_id TEXT
+    last_subscription_id TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_entitlements_plan
+CREATE INDEX idx_entitlements_plan
     ON entitlements(plan);
 
-CREATE INDEX IF NOT EXISTS idx_entitlements_status
+CREATE INDEX idx_entitlements_status
     ON entitlements(status);
 
-CREATE TABLE IF NOT EXISTS paypal_orders (
+CREATE TABLE paypal_subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     firebase_uid TEXT NOT NULL,
-    order_id TEXT NOT NULL UNIQUE,
+    subscription_id TEXT NOT NULL UNIQUE,
     plan_id TEXT NOT NULL,
-    amount TEXT NOT NULL,
-    currency TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'CREATED',
+    paypal_plan_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'APPROVAL_PENDING',
     created_at INTEGER NOT NULL,
-    captured_at INTEGER,
-    payer_id TEXT,
-    CHECK (amount <> '')
+    updated_at INTEGER NOT NULL,
+    approved_at INTEGER,
+    current_period_end INTEGER,
+    next_billing_time INTEGER,
+    payer_id TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_paypal_orders_uid
-    ON paypal_orders(firebase_uid);
+CREATE INDEX idx_paypal_subscriptions_uid
+    ON paypal_subscriptions(firebase_uid);
 
-CREATE INDEX IF NOT EXISTS idx_paypal_orders_status
-    ON paypal_orders(status);
-
-CREATE TABLE IF NOT EXISTS credit_accounts (
-    firebase_uid TEXT PRIMARY KEY,
-    purchased_credits INTEGER NOT NULL DEFAULT 0,
-    plan_credits INTEGER NOT NULL DEFAULT 0,
-    updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS credit_transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    firebase_uid TEXT NOT NULL,
-    bucket TEXT NOT NULL,
-    amount INTEGER NOT NULL,
-    type TEXT NOT NULL,
-    source TEXT NOT NULL,
-    reference_id TEXT,
-    created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_credit_transactions_uid
-    ON credit_transactions(firebase_uid);
-
-CREATE INDEX IF NOT EXISTS idx_credit_transactions_ref
-    ON credit_transactions(reference_id);
-
-CREATE TABLE IF NOT EXISTS tool_usage (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    firebase_uid TEXT NOT NULL,
-    tool_id TEXT NOT NULL,
-    credits_used INTEGER NOT NULL DEFAULT 0,
-    created_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_tool_usage_uid
-    ON tool_usage(firebase_uid);
-
-CREATE INDEX IF NOT EXISTS idx_tool_usage_tool
-    ON tool_usage(tool_id);
+CREATE INDEX idx_paypal_subscriptions_status
+    ON paypal_subscriptions(status);
