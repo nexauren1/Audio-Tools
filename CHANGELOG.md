@@ -1,5 +1,31 @@
 # Audio Tools — Changelog
 
+## 0.11.0 — Home e armazenamento
+
+### Interface
+- Home focada exclusivamente nas seis ferramentas.
+- Grelha 3×2 de ferramentas na Home.
+- Menu único no canto superior direito.
+- Favoritos, partilha e abertura diretamente no card.
+- Nova paleta de cores mais viva e contrastada.
+
+### Ferramentas
+- Circuito animado durante processamento.
+- Fluxo consistente: selecionar → processar → resultado → guardar.
+- Partilha de resultado corrigida para URI/ficheiro temporário.
+
+### Armazenamento
+- Resultados finais saem da área privada do app.
+- Pasta escolhida pelo utilizador através do Storage Access Framework.
+- Cada ferramenta cria automaticamente a sua própria pasta:
+  <Ferramenta> - Nexauren
+- A pasta fica no armazenamento partilhado escolhido pelo utilizador.
+
+### Organização
+- Recentes, favoritos, histórico e estatísticas deixam de ocupar a Home.
+- Centro de armazenamento disponível no Menu e nas Definições.
+
+
 ## 0.10.0 — Nova experiência
 
 ### Interface
