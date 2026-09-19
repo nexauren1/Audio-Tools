@@ -16,21 +16,35 @@ import android.widget.Toast
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.android.material.button.MaterialButton
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.nexauren.audiotools.R
+import kotlinx.coroutines.launch
 
 class AuthActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var submitButton: MaterialButton
     private lateinit var switchButton: MaterialButton
+    private var googleButton: MaterialButton? = null
     private var forgotButton: MaterialButton? = null
+    private val credentialManager by lazy { CredentialManager.create(this) }
     private var messageView: TextView? = null
     private var registerMode = false
 
@@ -264,6 +278,24 @@ class AuthActivity : ComponentActivity() {
         content.addView(submitButton)
         content.addView(ViewKit.spacer(this, 8))
 
+        content.addView(TextView(this).apply {
+            text = AuthStrings.t(this@AuthActivity, "or")
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTextColor(ContextCompat.getColor(this@AuthActivity, R.color.audio_muted))
+            setPadding(0, 0, 0, ViewKit.dp(this@AuthActivity, 4))
+        })
+
+        googleButton = ViewKit.button(
+            this,
+            AuthStrings.t(this, "continue_google"),
+            false,
+            R.color.audio_blue
+        )
+        googleButton?.setOnClickListener { signInWithGoogle() }
+        content.addView(googleButton)
+        content.addView(ViewKit.spacer(this, 8))
+
         switchButton = ViewKit.button(
             this,
             if (registerMode) AuthStrings.t(this, "switch_login")
@@ -425,6 +457,132 @@ class AuthActivity : ComponentActivity() {
         }
     }
 
+    private fun signInWithGoogle() {
+        hideMessage()
+        setLoading(true)
+
+        lifecycleScope.launch {
+            try {
+                val response = try {
+                    requestGoogleCredential(authorizedOnly = true)
+                } catch (_: NoCredentialException) {
+                    requestGoogleCredential(authorizedOnly = false)
+                }
+
+                val credential = response.credential
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleCredential = GoogleIdTokenCredential.createFrom(
+                        credential.data
+                    )
+                    val firebaseCredential = GoogleAuthProvider.getCredential(
+                        googleCredential.idToken,
+                        null
+                    )
+
+                    auth.signInWithCredential(firebaseCredential)
+                        .addOnCompleteListener { task ->
+                            if (!task.isSuccessful) {
+                                setLoading(false)
+                                showMessage(googleFirebaseError(task.exception))
+                                return@addOnCompleteListener
+                            }
+
+                            val user = auth.currentUser
+                            if (user == null) {
+                                setLoading(false)
+                                showMessage(AuthStrings.t(this@AuthActivity, "auth_generic"))
+                                return@addOnCompleteListener
+                            }
+
+                            saveProfile(user, user.displayName.orEmpty())
+                            openMain()
+                        }
+                } else {
+                    setLoading(false)
+                    showMessage(AuthStrings.t(this@AuthActivity, "google_unavailable"))
+                }
+            } catch (error: GoogleIdTokenParsingException) {
+                setLoading(false)
+                Log.e("AuthActivity", "Google credential parsing failed.", error)
+                showMessage(AuthStrings.t(this@AuthActivity, "google_unavailable"))
+            } catch (error: GetCredentialException) {
+                setLoading(false)
+                showMessage(googleCredentialError(error))
+            } catch (error: IllegalStateException) {
+                setLoading(false)
+                Log.e("AuthActivity", "Google authentication configuration failed.", error)
+                showMessage(AuthStrings.t(this@AuthActivity, "google_config"))
+            } catch (error: Exception) {
+                setLoading(false)
+                Log.e("AuthActivity", "Google authentication failed.", error)
+                showMessage(AuthStrings.t(this@AuthActivity, "google_unavailable"))
+            }
+        }
+    }
+
+    private suspend fun requestGoogleCredential(
+        authorizedOnly: Boolean
+    ): androidx.credentials.GetCredentialResponse {
+        val webClientId = try {
+            getString(R.string.default_web_client_id)
+        } catch (error: Exception) {
+            throw IllegalStateException("default_web_client_id is unavailable.", error)
+        }
+
+        if (webClientId.isBlank()) {
+            throw IllegalStateException("default_web_client_id is blank.")
+        }
+
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(webClientId)
+            .setFilterByAuthorizedAccounts(authorizedOnly)
+            .setAutoSelectEnabled(false)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        return credentialManager.getCredential(this, request)
+    }
+
+    private fun googleCredentialError(error: GetCredentialException): String {
+        val message = error.message.orEmpty()
+        Log.e("AuthActivity", "Credential Manager Google sign-in failed: $message", error)
+
+        return if (
+            message.contains("cancel", ignoreCase = true) ||
+            message.contains("canceled", ignoreCase = true) ||
+            message.contains("cancelled", ignoreCase = true)
+        ) {
+            AuthStrings.t(this, "google_cancelled")
+        } else {
+            AuthStrings.t(this, "google_unavailable")
+        }
+    }
+
+    private fun googleFirebaseError(error: Exception?): String {
+        Log.e("AuthActivity", "Firebase Google sign-in failed.", error)
+        return when (error) {
+            is com.google.firebase.auth.FirebaseAuthUserCollisionException ->
+                AuthStrings.t(this, "google_account_conflict")
+            else -> {
+                val normalized = error?.message.orEmpty()
+                if (
+                    normalized.contains("API key", ignoreCase = true) ||
+                    normalized.contains("SHA", ignoreCase = true) ||
+                    normalized.contains("authorized", ignoreCase = true)
+                ) {
+                    AuthStrings.t(this, "google_config")
+                } else {
+                    AuthStrings.t(this, "google_unavailable")
+                }
+            }
+        }
+    }
+
     private fun saveProfile(user: FirebaseUser, name: String) {
         val data = hashMapOf<String, Any>(
             "uid" to user.uid,
@@ -472,6 +630,7 @@ class AuthActivity : ComponentActivity() {
     private fun setLoading(loading: Boolean) {
         submitButton.isEnabled = !loading
         switchButton.isEnabled = !loading
+        googleButton?.isEnabled = !loading
         forgotButton?.isEnabled = !loading
         submitButton.text =
             if (loading) {
