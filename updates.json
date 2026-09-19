@@ -1,11 +1,11 @@
 {
-  "version": "0.8.1",
+  "version": "0.9.0",
   "tools": ["pro-inspector"],
   "news": [
     {
-      "id": "v0.8.1-paypal-worker-endpoint",
-      "title": "Pro + PayPal Sandbox — conexão corrigida",
-      "description": "Corrige a ligação ao Worker Audio Tools, mantém Firebase como sistema de contas e reforça o backend Pro com PayPal Sandbox e D1."
+      "id": "v0.9.0-plans",
+      "title": "Planos Free, Pro e Premium",
+      "description": "Remove créditos e compras únicas. Adiciona assinaturas mensais, bloqueio de ferramentas e uma página de upgrade com os detalhes de cada plano."
     }
   ]
 }
