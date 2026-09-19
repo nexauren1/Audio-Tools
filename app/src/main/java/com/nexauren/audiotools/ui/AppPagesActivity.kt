@@ -30,6 +30,7 @@ import com.nexauren.audiotools.R
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.payments.PaymentClient
+import com.nexauren.audiotools.support.SupportClient
 import java.io.File
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -1233,8 +1234,119 @@ class AppPagesActivity : ComponentActivity() {
                 )
             }
 
-        details.addView(body)
         root.addView(details)
+
+        root.addView(
+            ViewKit.spacer(this, 12)
+        )
+
+        val cachedPlan =
+            PlanAccessStore.current(this)
+
+        val planAccent =
+            when (cachedPlan.plan) {
+                "PREMIUM" ->
+                    R.color.audio_purple
+                "PRO" ->
+                    R.color.audio_blue
+                else ->
+                    R.color.audio_green
+            }
+
+        root.addView(
+            ViewKit.card(
+                this,
+                accentColorRes = planAccent
+            ).apply {
+                addView(
+                    LinearLayout(this@AppPagesActivity).apply {
+                        orientation =
+                            LinearLayout.VERTICAL
+
+                        setPadding(
+                            ViewKit.dp(
+                                this@AppPagesActivity,
+                                15
+                            ),
+                            ViewKit.dp(
+                                this@AppPagesActivity,
+                                15
+                            ),
+                            ViewKit.dp(
+                                this@AppPagesActivity,
+                                15
+                            ),
+                            ViewKit.dp(
+                                this@AppPagesActivity,
+                                15
+                            )
+                        )
+
+                        addView(
+                            ViewKit.eyebrow(
+                                this@AppPagesActivity,
+                                "PLANO ATUAL"
+                            )
+                        )
+
+                        addView(
+                            ViewKit.title(
+                                this@AppPagesActivity,
+                                when (cachedPlan.plan) {
+                                    "PREMIUM" ->
+                                        "Premium"
+                                    "PRO" ->
+                                        "Pro"
+                                    else ->
+                                        "Free"
+                                },
+                                21f
+                            )
+                        )
+
+                        addView(
+                            ViewKit.spacer(
+                                this@AppPagesActivity,
+                                5
+                            )
+                        )
+
+                        addView(
+                            infoLine(
+                                "Estado",
+                                if (
+                                    cachedPlan.hasAccess(
+                                        cachedPlan.plan
+                                    )
+                                ) {
+                                    "Ativo"
+                                } else if (
+                                    cachedPlan.plan ==
+                                        "FREE"
+                                ) {
+                                    "Ativo"
+                                } else {
+                                    "Expirado"
+                                }
+                            )
+                        )
+
+                        addView(
+                            infoLine(
+                                "Válido até",
+                                cachedPlan.expiresAt
+                                    ?.let {
+                                        formatDate(
+                                            it * 1000L
+                                        )
+                                    }
+                                    ?: "Sem expiração"
+                            )
+                        )
+                    }
+                )
+            }
+        )
 
         root.addView(
             ViewKit.spacer(this, 12)
@@ -1287,7 +1399,7 @@ class AppPagesActivity : ComponentActivity() {
         root.addView(
             ViewKit.subtitle(
                 this,
-                "Envia um pedido de suporte, uma reclamação ou uma sugestão. Por enquanto, o formulário fica guardado neste dispositivo; ligaremos o destino de atendimento depois."
+                "Envia suporte, reclamações ou sugestões diretamente para o email de atendimento. Os dados da tua conta são incluídos automaticamente."
             )
         )
 
@@ -1360,14 +1472,15 @@ class AppPagesActivity : ComponentActivity() {
         root.addView(message.second)
         root.addView(ViewKit.spacer(this, 10))
 
-        root.addView(
+        val sendButton =
             ViewKit.button(
                 this,
-                "Guardar pedido",
+                "Enviar para o suporte",
                 true,
                 R.color.audio_blue
-            ).apply {
-                setOnClickListener {
+            )
+
+        sendButton.setOnClickListener {
                     val s =
                         subject.first.text
                             .toString()
@@ -1395,17 +1508,52 @@ class AppPagesActivity : ComponentActivity() {
                         m
                     )
 
-                    subject.first.setText("")
-                    message.first.setText("")
+                    sendButton.isEnabled =
+                        false
+                    sendButton.text =
+                        "A enviar…"
 
-                    Toast.makeText(
-                        this@AppPagesActivity,
-                        "Pedido guardado. O canal de atendimento será ligado numa próxima fase.",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    networkExecutor.execute {
+                        runCatching {
+                            SupportClient.send(
+                                selectedSupportType,
+                                s,
+                                m
+                            )
+                        }.onSuccess {
+                            uiHandler.post {
+                                sendButton.isEnabled =
+                                    true
+                                sendButton.text =
+                                    "Enviar para o suporte"
+                                subject.first.setText("")
+                                message.first.setText("")
+
+                                Toast.makeText(
+                                    this@AppPagesActivity,
+                                    "Enviado com sucesso para o suporte.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }.onFailure { error ->
+                            uiHandler.post {
+                                sendButton.isEnabled =
+                                    true
+                                sendButton.text =
+                                    "Tentar novamente"
+
+                                Toast.makeText(
+                                    this@AppPagesActivity,
+                                    "Não foi possível enviar agora. O pedido ficou guardado neste dispositivo.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    }
                 }
             }
-        )
+
+        root.addView(sendButton)
 
         root.addView(
             ViewKit.spacer(this, 16)
@@ -1468,7 +1616,7 @@ class AppPagesActivity : ComponentActivity() {
                         addView(
                             ViewKit.subtitle(
                                 this@AppPagesActivity,
-                                "A estrutura já está pronta para ligar estes pedidos ao teu painel, email ou backend quando decidirmos onde os receber."
+                                "Os pedidos enviados pelo formulário são registados no backend e encaminhados para o email de atendimento."
                             )
                         )
                     }
