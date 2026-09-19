@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1062503070204-h9g62lq64bo52nkog0odmkkvjv250i1n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nexauren.audiotools",
+            "certificate_hash": "cdbf14c64837d346db30095103f555ae0452c50a"
+          }
+        },
+        {
           "client_id": "1062503070204-6mupivksk12bcs0al9nd5qe59naf1ua7.apps.googleusercontent.com",
           "client_type": 3
         }
