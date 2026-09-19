@@ -804,7 +804,7 @@ class ToolDetailActivity : ComponentActivity() {
                     if (index >= 0) {
                         val inBuffer = encoder.getInputBuffer(index) ?: error("no input")
                         inBuffer.clear()
-                        val want = min(min(inBuffer.remaining(), buffer.size.toLong()), bytesRemaining).toInt()
+                        val want = minOf(inBuffer.remaining().toLong(), buffer.size.toLong(), bytesRemaining).toInt()
                         val read = if (want > 0) input.read(buffer, 0, want) else 0
                         if (read > 0) {
                             inBuffer.put(buffer, 0, read)
