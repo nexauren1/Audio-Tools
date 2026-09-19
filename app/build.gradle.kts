@@ -28,8 +28,8 @@ android {
         applicationId = "com.nexauren.audiotools"
         minSdk = 23
         targetSdk = 37
-        versionCode = 14
-        versionName = "0.7.0"
+        versionCode = 15
+        versionName = "0.7.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
