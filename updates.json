@@ -1,11 +1,11 @@
 {
-  "version": "0.6.3",
+  "version": "0.6.4",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.3-auth-cleanup",
-      "title": "Autenticação estabilizada",
-      "description": "Limpeza do fluxo de autenticação e correção do código de conta para gerar a versão de release."
+      "id": "v0.6.4-auth-diagnostics",
+      "title": "Autenticação Firebase diagnosticada",
+      "description": "Melhoria do tratamento de erros do Firebase para identificar a causa real da falha de criação de conta e login."
     }
   ]
 }
