@@ -59,8 +59,8 @@ class WaveformTrimView(context: Context) : View(context) {
 
     fun setRange(start: Long, end: Long) {
         if (durationMs <= 0L) return
-        startMs = start.coerceIn(0L, durationMs - 1L)
-        endMs = end.coerceIn(startMs + 1L, durationMs)
+        endMs = end.coerceIn(1L, durationMs)
+        startMs = start.coerceIn(0L, endMs - 1L)
         invalidate()
         onRangeChanged?.invoke(startMs, endMs)
     }
