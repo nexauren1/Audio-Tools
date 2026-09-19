@@ -4,9 +4,7 @@
   "compatibility_date": "2026-09-19",
   "vars": {
     "FIREBASE_PROJECT_ID": "audio-tools-e725e",
-    "PAYPAL_ENVIRONMENT": "sandbox",
-    "PRO_PRICE_USD": "5.00",
-    "PRO_DURATION_DAYS": "30"
+    "PAYPAL_ENVIRONMENT": "sandbox"
   },
   "secrets": {
     "required": [
