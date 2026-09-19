@@ -860,6 +860,17 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun previewCutSelection() {
+        pendingPreviewPath
+            ?.let { path ->
+                val result =
+                    File(path)
+
+                if (result.exists()) {
+                    playFile(result)
+                    return
+                }
+            }
+
         val uri = selectedUri ?: return
         releasePlayer()
         val player = MediaPlayer()
@@ -1251,17 +1262,7 @@ class ToolDetailActivity : ComponentActivity() {
                 .setPositiveButton(
                     "Escolher pasta"
                 ) { _, _ ->
-                    directoryPicker.launch(
-                        Intent(
-                            Intent.ACTION_OPEN_DOCUMENT_TREE
-                        ).apply {
-                            addFlags(
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
-                                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                            )
-                        }
-                    )
+                    directoryPicker.launch(null)
                 }
                 .show()
 
@@ -1569,6 +1570,7 @@ class ToolDetailActivity : ComponentActivity() {
                 start()
             }
             lastOutputPath = null
+            lastOutputUri = null
             pendingPreviewPath = output.absolutePath
             pendingPreviewName = name
             pendingSaveMimeType = "audio/mp4"
