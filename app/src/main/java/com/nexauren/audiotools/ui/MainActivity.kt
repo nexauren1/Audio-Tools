@@ -8,13 +8,13 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.nexauren.audiotools.BuildConfig
 import com.nexauren.audiotools.R
@@ -24,9 +24,9 @@ import com.nexauren.audiotools.notifications.NotificationCenter
 import com.nexauren.audiotools.update.UpdateScheduler
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var scrollView: ScrollView
-    private var heroPreview: SignalPreviewView? = null
+    private lateinit var toolGrid: LinearLayout
+    private var searchInput: EditText? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +36,9 @@ class MainActivity : ComponentActivity() {
         buildUi()
     }
 
-    override fun onDestroy() {
-        heroPreview?.stop()
-        super.onDestroy()
+    override fun onResume() {
+        super.onResume()
+        if (::toolGrid.isInitialized) renderTools(searchInput?.text?.toString().orEmpty())
     }
 
     private fun requestNotificationsIfNeeded() {
@@ -53,39 +53,84 @@ class MainActivity : ComponentActivity() {
 
     private fun buildUi() {
         val root = ViewKit.page(this)
-
         root.addView(topBar())
-        root.addView(ViewKit.spacer(this, 18))
-        root.addView(heroSection())
-        root.addView(ViewKit.spacer(this, 20))
+        root.addView(ViewKit.spacer(this, 16))
 
-        val heading = LinearLayout(this).apply {
+        val hero = ViewKit.hero(this)
+        val heroContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(ViewKit.dp(this@MainActivity, 17), ViewKit.dp(this@MainActivity, 17), ViewKit.dp(this@MainActivity, 17), ViewKit.dp(this@MainActivity, 18))
+        }
+        val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        val headingCopy = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        row.addView(ViewKit.pill(this, "NEXAUREN AUDIO", colorRes = R.color.audio_blue))
+        row.addView(ViewKit.spacer(this, 1).apply {
+            layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
+        })
+        row.addView(ViewKit.pill(this, ViewKit.shortVersion(BuildConfig.VERSION_NAME), colorRes = R.color.audio_green))
+        heroContent.addView(row)
+        heroContent.addView(ViewKit.spacer(this, 12))
+        heroContent.addView(ViewKit.title(this, "O teu áudio,\nno teu controlo.", 27f))
+        heroContent.addView(ViewKit.spacer(this, 7))
+        heroContent.addView(ViewKit.subtitle(this, AppStrings.t(this, "workspace_desc")))
+        heroContent.addView(ViewKit.spacer(this, 12))
+
+        val status = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
         }
-        headingCopy.addView(ViewKit.eyebrow(this, "WORKSPACE"))
-        headingCopy.addView(ViewKit.title(this, "Escolhe o que precisas", 23f))
-        headingCopy.addView(ViewKit.spacer(this, 3))
-        headingCopy.addView(ViewKit.subtitle(this, "Três ferramentas focadas. Cada uma faz uma coisa e faz essa coisa bem."))
-        heading.addView(headingCopy)
-        heading.addView(ViewKit.pill(this, "03 ATIVAS", colorRes = R.color.audio_green))
+        status.addView(metric("4", AppStrings.t(this, "active"), R.color.audio_blue))
+        status.addView(ViewKit.spacer(this, 12))
+        status.addView(metric("100%", AppStrings.t(this, "local_processing"), R.color.audio_green))
+        heroContent.addView(status)
+        hero.addView(heroContent)
+        root.addView(hero)
+
+        root.addView(ViewKit.spacer(this, 20))
+        val heading = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        heading.addView(ViewKit.eyebrow(this, AppStrings.t(this, "workspace")))
+        heading.addView(ViewKit.title(this, AppStrings.t(this, "choose"), 22f))
+        heading.addView(ViewKit.spacer(this, 4))
+        heading.addView(ViewKit.subtitle(this, AppStrings.t(this, "workspace_desc")))
         root.addView(heading)
+        root.addView(ViewKit.spacer(this, 12))
+
+        searchInput = EditText(this).apply {
+            hint = if (LanguageManager.get(this@MainActivity) == "pt") "Pesquisar ferramentas…" else "Search tools…"
+            singleLine = true
+            textSize = 14f
+            setPadding(ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12))
+            background = GradientDrawable().apply {
+                cornerRadius = ViewKit.dp(this@MainActivity, 15).toFloat()
+                setColor(ContextCompat.getColor(this@MainActivity, R.color.audio_surface))
+                setStroke(ViewKit.dp(this@MainActivity, 1), ContextCompat.getColor(this@MainActivity, R.color.audio_border))
+            }
+            addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    renderTools(s?.toString().orEmpty())
+                }
+                override fun afterTextChanged(s: android.text.Editable?) = Unit
+            })
+        }
+        root.addView(searchInput)
 
         root.addView(ViewKit.spacer(this, 12))
-        ToolCatalog.tools.forEach { tool ->
-            root.addView(toolCard(tool))
-            root.addView(ViewKit.spacer(this, 12))
+        toolGrid = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
         }
+        root.addView(toolGrid)
 
+        root.addView(ViewKit.spacer(this, 16))
         root.addView(quickFlow())
         root.addView(ViewKit.spacer(this, 12))
         root.addView(localPrivacyCard())
 
-        root.addView(ViewKit.spacer(this, 22))
+        root.addView(ViewKit.spacer(this, 20))
         root.addView(TextView(this).apply {
             text = "AUDIO TOOLS  •  " + BuildConfig.VERSION_NAME
             textSize = 10.5f
@@ -100,6 +145,7 @@ class MainActivity : ComponentActivity() {
             addView(root)
         }
         setContentView(scrollView)
+        renderTools()
     }
 
     private fun topBar(): ViewGroup {
@@ -107,24 +153,11 @@ class MainActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-
-        val logo = TextView(this).apply {
-            text = "AT"
-            textSize = 14f
-            gravity = Gravity.CENTER
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setTextColor(Color.WHITE)
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = ViewKit.dp(this@MainActivity, 14).toFloat()
-                setColor(ContextCompat.getColor(this@MainActivity, R.color.audio_blue))
-            }
+        header.addView(ViewKit.iconBadge(this, "AT", R.color.audio_blue).apply {
             layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 44), ViewKit.dp(this@MainActivity, 44)).apply {
                 rightMargin = ViewKit.dp(this@MainActivity, 11)
             }
-        }
-        header.addView(logo)
-
+        })
         val brand = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
@@ -137,177 +170,113 @@ class MainActivity : ComponentActivity() {
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_text))
         })
         header.addView(brand)
-
-        header.addView(ViewKit.iconButton(this, "☰", "Menu").apply {
-            setOnClickListener { showMenu() }
-        })
+        header.addView(ViewKit.iconButton(this, "☰", AppStrings.t(this, "menu")).apply { setOnClickListener { showMenu() } })
         header.addView(ViewKit.spacer(this, 2))
-        header.addView(ViewKit.iconButton(this, "⚙", "Definições").apply {
-            setOnClickListener {
-                startActivity(android.content.Intent(this@MainActivity, SettingsActivity::class.java))
-            }
+        header.addView(ViewKit.iconButton(this, "⚙", AppStrings.t(this, "settings")).apply {
+            setOnClickListener { startActivity(android.content.Intent(this@MainActivity, SettingsActivity::class.java)) }
         })
         return header
     }
 
-    private fun heroSection(): MaterialCardView {
-        val card = ViewKit.hero(this)
-        val content = LinearLayout(this).apply {
+    private fun metric(value: String, label: String, colorRes: Int): LinearLayout =
+        LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 18)
-            )
+            addView(TextView(this@MainActivity).apply {
+                text = value
+                textSize = 16f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                setTextColor(ContextCompat.getColor(this@MainActivity, colorRes))
+            })
+            addView(TextView(this@MainActivity).apply {
+                text = label
+                textSize = 10.5f
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
+            })
         }
 
-        val statusRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+    private fun renderTools(query: String = "") {
+        if (!::toolGrid.isInitialized) return
+        toolGrid.removeAllViews()
+        val q = query.trim().lowercase()
+        val tools = ToolCatalog.tools.mapNotNull { tool ->
+            val copy = AppStrings.tool(this, tool.id)
+            if (q.isBlank() || (copy.title + " " + copy.description + " " + copy.category).lowercase().contains(q)) {
+                tool
+            } else null
         }
-        statusRow.addView(ViewKit.pill(this, "AUDIO WORKSPACE", colorRes = R.color.audio_blue))
-        statusRow.addView(ViewKit.spacer(this, 1).apply {
-            layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
-        })
-        statusRow.addView(ViewKit.pill(this, "LOCAL", positive = true))
-        content.addView(statusRow)
 
-        heroPreview = SignalPreviewView(this, R.color.audio_blue, live = false).also {
-            it.layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewKit.dp(this, 112)
-            ).apply {
-                topMargin = ViewKit.dp(this@MainActivity, 14)
-                bottomMargin = ViewKit.dp(this@MainActivity, 14)
+        if (tools.isEmpty()) {
+            toolGrid.addView(ViewKit.card(this).apply {
+                addView(TextView(this@MainActivity).apply {
+                    text = "—"
+                    textSize = 22f
+                    gravity = Gravity.CENTER
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
+                    setPadding(ViewKit.dp(this@MainActivity, 20), ViewKit.dp(this@MainActivity, 20), ViewKit.dp(this@MainActivity, 20), ViewKit.dp(this@MainActivity, 20))
+                })
+            })
+            return
+        }
+
+        tools.chunked(2).forEach { pair ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
             }
-            it.start()
+            pair.forEachIndexed { index, tool ->
+                row.addView(compactToolCard(tool), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (index == 0) rightMargin = ViewKit.dp(this@MainActivity, 8)
+                })
+            }
+            if (pair.size == 1) row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f).apply { leftMargin = ViewKit.dp(this@MainActivity, 8) })
+            toolGrid.addView(row)
+            toolGrid.addView(ViewKit.spacer(this, 8))
         }
-        content.addView(heroPreview)
-
-        content.addView(ViewKit.title(this, "O teu áudio,\nno teu controlo.", 28f))
-        content.addView(ViewKit.spacer(this, 8))
-        content.addView(ViewKit.subtitle(this, "Corta, grava e analisa diretamente no telemóvel, com feedback visual em cada etapa."))
-
-        content.addView(ViewKit.spacer(this, 14))
-        val colorLegend = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        colorLegend.addView(colorDot(R.color.audio_blue))
-        colorLegend.addView(legendText("Editar"))
-        colorLegend.addView(ViewKit.spacer(this, 10))
-        colorLegend.addView(colorDot(R.color.audio_red))
-        colorLegend.addView(legendText("Gravar"))
-        colorLegend.addView(ViewKit.spacer(this, 10))
-        colorLegend.addView(colorDot(R.color.audio_yellow))
-        colorLegend.addView(legendText("Analisar"))
-        colorLegend.addView(ViewKit.spacer(this, 10))
-        colorLegend.addView(colorDot(R.color.audio_green))
-        colorLegend.addView(legendText("Pronto"))
-        content.addView(colorLegend)
-
-        content.addView(ViewKit.spacer(this, 14))
-        content.addView(ViewKit.button(this, "Abrir ferramentas", true, R.color.audio_blue).apply {
-            setOnClickListener { scrollToTools() }
-        })
-
-        card.addView(content)
-        return card
     }
 
-    private fun legendText(value: String): TextView =
-        TextView(this).apply {
-            text = value
-            textSize = 11f
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
+    private fun compactToolCard(tool: AudioTool): MaterialCardView {
+        val accent = toolAccent(tool.id)
+        val copy = AppStrings.tool(this, tool.id)
+        val card = ViewKit.card(this, clickable = true, accentColorRes = accent).apply {
+            setOnClickListener { startActivity(ToolDetailActivity.intent(this@MainActivity, tool.id)) }
         }
-
-    private fun colorDot(colorRes: Int): View =
-        View(this).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(ContextCompat.getColor(this@MainActivity, colorRes))
-            }
-            layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 8), ViewKit.dp(this@MainActivity, 8)).apply {
-                rightMargin = ViewKit.dp(this@MainActivity, 4)
-            }
-        }
-
-    private fun toolCard(tool: AudioTool): MaterialCardView {
-        val colorRes = toolAccent(tool.id)
-        val card = ViewKit.card(this, clickable = true, accentColorRes = colorRes)
-        card.setOnClickListener {
-            startActivity(ToolDetailActivity.intent(this, tool.id))
-        }
-
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(
-                ViewKit.dp(this@MainActivity, 14),
-                ViewKit.dp(this@MainActivity, 14),
-                ViewKit.dp(this@MainActivity, 14),
-                ViewKit.dp(this@MainActivity, 14)
-            )
+            setPadding(ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 13))
         }
-
-        val preview = SignalPreviewView(this, colorRes, live = false).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewKit.dp(this@MainActivity, 76)
-            )
-            alpha = 0.94f
-        }
-        content.addView(preview)
-        content.addView(ViewKit.spacer(this, 13))
-
-        val header = LinearLayout(this).apply {
+        val iconRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-
-        header.addView(ViewKit.iconBadge(this, toolSymbol(tool.id), colorRes).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 46), ViewKit.dp(this@MainActivity, 46)).apply {
-                rightMargin = ViewKit.dp(this@MainActivity, 11)
-            }
+        iconRow.addView(ViewKit.iconBadge(this, toolSymbol(tool.id), accent).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 40), ViewKit.dp(this@MainActivity, 40)).apply { rightMargin = ViewKit.dp(this@MainActivity, 8) }
         })
-
-        val copy = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
+        iconRow.addView(TextView(this).apply {
+            text = "›"
+            textSize = 22f
+            setTextColor(ContextCompat.getColor(this@MainActivity, accent))
+            gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        copy.addView(TextView(this).apply {
-            text = tool.title
-            textSize = 18f
+        })
+        content.addView(iconRow)
+        content.addView(ViewKit.spacer(this, 9))
+        content.addView(TextView(this).apply {
+            text = copy.title
+            textSize = 15f
+            maxLines = 2
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_text))
         })
-        copy.addView(ViewKit.spacer(this, 4))
-        copy.addView(TextView(this).apply {
-            text = tool.description
-            textSize = 12.5f
+        content.addView(ViewKit.spacer(this, 4))
+        content.addView(TextView(this).apply {
+            text = copy.description
+            textSize = 11f
+            maxLines = 3
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
-            setLineSpacing(1.08f, 1f)
+            setLineSpacing(1.05f, 1f)
         })
-        header.addView(copy)
-        content.addView(header)
-
-        content.addView(ViewKit.spacer(this, 12))
-        val footer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        footer.addView(ViewKit.pill(this, tool.category, colorRes = colorRes))
-        footer.addView(ViewKit.spacer(this, 1).apply {
-            layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
-        })
-        footer.addView(ViewKit.button(this, "Abrir  ›", false, colorRes).apply {
-            minHeight = ViewKit.dp(this@MainActivity, 44)
-            minWidth = 0
-            setOnClickListener { startActivity(ToolDetailActivity.intent(this@MainActivity, tool.id)) }
-        })
-        content.addView(footer)
-
+        content.addView(ViewKit.spacer(this, 8))
+        content.addView(ViewKit.pill(this, copy.category, colorRes = accent))
         card.addView(content)
         return card
     }
@@ -316,25 +285,16 @@ class MainActivity : ComponentActivity() {
         val card = ViewKit.card(this)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 16),
-                ViewKit.dp(this@MainActivity, 16)
-            )
+            setPadding(ViewKit.dp(this@MainActivity, 15), ViewKit.dp(this@MainActivity, 15), ViewKit.dp(this@MainActivity, 15), ViewKit.dp(this@MainActivity, 15))
         }
-        content.addView(ViewKit.eyebrow(this, "FLUXO RÁPIDO"))
-        content.addView(ViewKit.title(this, "Escolher  →  trabalhar  →  guardar", 18f))
-        content.addView(ViewKit.spacer(this, 12))
-
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
+        content.addView(ViewKit.eyebrow(this, AppStrings.t(this, "quick_flow")))
+        content.addView(ViewKit.title(this, AppStrings.t(this, "flow_title"), 17f))
+        content.addView(ViewKit.spacer(this, 10))
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         val items = listOf(
-            Triple("01", "Abrir", R.color.audio_blue),
-            Triple("02", "Processar", R.color.audio_yellow),
-            Triple("03", "Guardar", R.color.audio_green)
+            Triple("01", AppStrings.t(this, "open"), R.color.audio_blue),
+            Triple("02", AppStrings.t(this, "process"), R.color.audio_yellow),
+            Triple("03", AppStrings.t(this, "save"), R.color.audio_green)
         )
         items.forEachIndexed { index, item ->
             val step = LinearLayout(this).apply {
@@ -343,23 +303,21 @@ class MainActivity : ComponentActivity() {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             }
             step.addView(ViewKit.iconBadge(this, item.first, item.third).apply {
-                layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 38), ViewKit.dp(this@MainActivity, 38))
+                layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 36), ViewKit.dp(this@MainActivity, 36))
             })
-            step.addView(ViewKit.spacer(this, 6))
+            step.addView(ViewKit.spacer(this, 5))
             step.addView(TextView(this).apply {
                 text = item.second
                 textSize = 10.5f
-                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
                 gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
             })
             row.addView(step)
-            if (index < items.lastIndex) {
-                row.addView(TextView(this).apply {
-                    text = "→"
-                    textSize = 18f
-                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_border))
-                })
-            }
+            if (index < items.lastIndex) row.addView(TextView(this).apply {
+                text = "→"
+                textSize = 17f
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_border))
+            })
         }
         content.addView(row)
         card.addView(content)
@@ -371,32 +329,21 @@ class MainActivity : ComponentActivity() {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(
-                ViewKit.dp(this@MainActivity, 15),
-                ViewKit.dp(this@MainActivity, 14),
-                ViewKit.dp(this@MainActivity, 15),
-                ViewKit.dp(this@MainActivity, 14)
-            )
+            setPadding(ViewKit.dp(this, 14), ViewKit.dp(this, 12), ViewKit.dp(this, 14), ViewKit.dp(this, 12))
         }
         row.addView(ViewKit.iconBadge(this, "✓", R.color.audio_green).apply {
-            layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 43), ViewKit.dp(this@MainActivity, 43)).apply {
-                rightMargin = ViewKit.dp(this@MainActivity, 11)
-            }
+            layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 40), ViewKit.dp(this@MainActivity, 40)).apply { rightMargin = ViewKit.dp(this@MainActivity, 10) }
         })
-        val copy = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
-        }
+        val copy = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f) }
         copy.addView(TextView(this).apply {
-            text = "Processamento local"
-            textSize = 14f
+            text = AppStrings.t(this@MainActivity, "local_processing")
+            textSize = 13.5f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_text))
         })
-        copy.addView(ViewKit.spacer(this, 3))
         copy.addView(TextView(this).apply {
-            text = "Os ficheiros são trabalhados no dispositivo nesta versão."
-            textSize = 11.5f
+            text = AppStrings.t(this@MainActivity, "local_desc")
+            textSize = 11f
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
         })
         row.addView(copy)
@@ -406,6 +353,7 @@ class MainActivity : ComponentActivity() {
 
     private fun toolAccent(toolId: String): Int = when (toolId) {
         "cut" -> R.color.audio_blue
+        "convert" -> R.color.audio_purple
         "recorder" -> R.color.audio_red
         "analyzer" -> R.color.audio_yellow
         else -> R.color.audio_blue
@@ -413,26 +361,30 @@ class MainActivity : ComponentActivity() {
 
     private fun toolSymbol(toolId: String): String = when (toolId) {
         "cut" -> "✂"
+        "convert" -> "⇄"
         "recorder" -> "●"
         "analyzer" -> "⌁"
         else -> "•"
     }
 
-    private fun scrollToTools() {
-        scrollView.post { scrollView.smoothScrollTo(0, ViewKit.dp(this, 455)) }
-    }
-
     private fun showMenu() {
         AlertDialog.Builder(this)
             .setTitle("AUDIO TOOLS")
-            .setItems(arrayOf("Ferramentas", "Atualizações", "Sobre", "Definições")) { dialog, which ->
+            .setItems(arrayOf(
+                AppStrings.t(this, "tools"),
+                AppStrings.t(this, "updates"),
+                AppStrings.t(this, "about"),
+                AppStrings.t(this, "settings")
+            )) { dialog, which ->
                 dialog.dismiss()
                 when (which) {
-                    0 -> scrollToTools()
+                    0 -> scrollView.smoothScrollTo(0, ViewKit.dp(this, 360))
                     1, 3 -> startActivity(android.content.Intent(this, SettingsActivity::class.java))
                     2 -> startActivity(android.content.Intent(this, AboutActivity::class.java))
                 }
             }
             .show()
     }
+
+    private fun ViewKit.shortVersion(version: String): String = version
 }
