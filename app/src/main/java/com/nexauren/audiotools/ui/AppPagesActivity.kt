@@ -1717,8 +1717,6 @@ class AppPagesActivity : ComponentActivity() {
     private fun openTool(
         tool: AudioTool
     ) {
-        UsageStore.record(this, tool.id)
-
         if (tool.id == "pro-inspector") {
             startActivity(
                 ProDemoActivity.intent(this)
