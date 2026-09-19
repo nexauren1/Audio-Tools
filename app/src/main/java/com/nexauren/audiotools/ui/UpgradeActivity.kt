@@ -277,6 +277,59 @@ class UpgradeActivity : ComponentActivity() {
         )
 
         root.addView(
+            ViewKit.spacer(this, 16)
+        )
+
+        root.addView(planComparison())
+
+        requestedPlan()?.let { required ->
+            root.addView(ViewKit.spacer(this, 10))
+            root.addView(
+                ViewKit.card(
+                    this,
+                    accentColorRes = R.color.audio_purple
+                ).apply {
+                    addView(
+                        LinearLayout(this@UpgradeActivity).apply {
+                            orientation = LinearLayout.VERTICAL
+                            setPadding(
+                                ViewKit.dp(this@UpgradeActivity, 14),
+                                ViewKit.dp(this@UpgradeActivity, 14),
+                                ViewKit.dp(this@UpgradeActivity, 14),
+                                ViewKit.dp(this@UpgradeActivity, 14)
+                            )
+                            addView(
+                                ViewKit.eyebrow(
+                                    this@UpgradeActivity,
+                                    "FERRAMENTA BLOQUEADA"
+                                )
+                            )
+                            addView(
+                                ViewKit.title(
+                                    this@UpgradeActivity,
+                                    "Esta ferramenta precisa de " + required + ".",
+                                    17f
+                                )
+                            )
+                            addView(
+                                ViewKit.spacer(
+                                    this@UpgradeActivity,
+                                    4
+                                )
+                            )
+                            addView(
+                                ViewKit.subtitle(
+                                    this@UpgradeActivity,
+                                    "Escolhe um plano abaixo para desbloquear o acesso."
+                                )
+                            )
+                        }
+                    )
+                }
+            )
+        }
+
+        root.addView(
             ViewKit.spacer(this, 18)
         )
 
@@ -330,6 +383,156 @@ class UpgradeActivity : ComponentActivity() {
                 addView(root)
             }
         )
+    }
+
+    private fun requestedPlan(): String? =
+        intent.getStringExtra(
+            EXTRA_REQUIRED_PLAN
+        )
+            ?.uppercase()
+            ?.takeIf {
+                it == "PRO" ||
+                    it == "PREMIUM"
+            }
+
+    private fun planComparison(): View {
+        val scroll =
+            android.widget.HorizontalScrollView(this).apply {
+                overScrollMode =
+                    View.OVER_SCROLL_NEVER
+                isHorizontalScrollBarEnabled = false
+            }
+
+        val row =
+            LinearLayout(this).apply {
+                orientation =
+                    LinearLayout.HORIZONTAL
+            }
+
+        val plans =
+            listOf(
+                Triple(
+                    "FREE",
+                    "$0",
+                    "Começar"
+                ),
+                Triple(
+                    "PRO",
+                    "$5 / mês",
+                    "Acesso Pro"
+                ),
+                Triple(
+                    "PREMIUM",
+                    "$10 / mês",
+                    "Acesso máximo"
+                )
+            )
+
+        plans.forEachIndexed { index, plan ->
+            val color =
+                when (plan.first) {
+                    "PRO" ->
+                        R.color.audio_blue
+                    "PREMIUM" ->
+                        R.color.audio_purple
+                    else ->
+                        R.color.audio_green
+                }
+
+            val card =
+                ViewKit.card(
+                    this,
+                    accentColorRes = color
+                ).apply {
+                    layoutParams =
+                        LinearLayout.LayoutParams(
+                            ViewKit.dp(this@UpgradeActivity, 154),
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                        ).apply {
+                            if (index > 0) {
+                                leftMargin =
+                                    ViewKit.dp(
+                                        this@UpgradeActivity,
+                                        8
+                                    )
+                            }
+                        }
+                }
+
+            val body =
+                LinearLayout(this).apply {
+                    orientation =
+                        LinearLayout.VERTICAL
+                    setPadding(
+                        ViewKit.dp(this@UpgradeActivity, 13),
+                        ViewKit.dp(this@UpgradeActivity, 13),
+                        ViewKit.dp(this@UpgradeActivity, 13),
+                        ViewKit.dp(this@UpgradeActivity, 13)
+                    )
+                }
+
+            body.addView(
+                ViewKit.pill(
+                    this,
+                    plan.first,
+                    colorRes = color
+                )
+            )
+
+            body.addView(
+                ViewKit.spacer(this, 8)
+            )
+
+            body.addView(
+                ViewKit.title(
+                    this,
+                    plan.second,
+                    17f
+                )
+            )
+
+            body.addView(
+                ViewKit.spacer(this, 5)
+            )
+
+            body.addView(
+                ViewKit.subtitle(
+                    this,
+                    plan.third
+                )
+            )
+
+            body.addView(
+                ViewKit.spacer(this, 8)
+            )
+
+            body.addView(
+                TextView(this).apply {
+                    text =
+                        when (plan.first) {
+                            "FREE" ->
+                                "Sem expiração"
+                            "PRO" ->
+                                "30 dias + renovação"
+                            else ->
+                                "30 dias + renovação"
+                        }
+                    textSize = 11.5f
+                    setTextColor(
+                        ContextCompat.getColor(
+                            this@UpgradeActivity,
+                            R.color.audio_muted
+                        )
+                    )
+                }
+            )
+
+            card.addView(body)
+            row.addView(card)
+        }
+
+        scroll.addView(row)
+        return scroll
     }
 
     private fun loadData() {
