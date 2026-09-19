@@ -548,9 +548,7 @@ class ProDemoActivity : ComponentActivity() {
 
             buildString {
                 append(name)
-                append("
-
-")
+                append("\n\n")
 
                 append("Duração: ")
                 append(
@@ -562,8 +560,7 @@ class ProDemoActivity : ComponentActivity() {
 
                 append("Formato: ")
                 append(mime)
-                append("
-")
+                append("\n")
 
                 append("Bitrate: ")
                 append(
