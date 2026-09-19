@@ -14,7 +14,6 @@ import android.media.MediaRecorder
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
@@ -972,8 +971,13 @@ class ToolDetailActivity : ComponentActivity() {
         worker.execute {
             try {
                 val sourceName = displayName(uri).substringBeforeLast(".").ifBlank { "video" }
-                val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
-                val output = File(cacheDir, sourceName + "_audio_preview_" + System.currentTimeMillis() + ".m4a")
+                val output = File(
+                    cacheDir,
+                    sourceName +
+                        "_audio_preview_" +
+                        System.currentTimeMillis() +
+                        ".m4a"
+                )
                 extractAac(uri, output)
                 pendingPreviewPath = output.absolutePath
                 pendingPreviewName = sourceName + "_audio.m4a"
