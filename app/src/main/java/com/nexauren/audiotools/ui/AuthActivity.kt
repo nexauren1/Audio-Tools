@@ -443,9 +443,14 @@ class AuthActivity : ComponentActivity() {
         submitButton.isEnabled = !loading
         switchButton.isEnabled = !loading
         forgotButton?.isEnabled = !loading
-        submitButton.text = if (loading) AuthStrings.t(this, "loading")
-        else if (registerMode) AuthStrings.t(this, "create_account")
-        else AuthStrings.t(this, "sign_in")
+        submitButton.text =
+            if (loading) {
+                AuthStrings.t(this, "loading")
+            } else if (registerMode) {
+                AuthStrings.t(this, "create_account")
+            } else {
+                AuthStrings.t(this, "sign_in")
+            }
     }
 
     private fun showMessage(message: String) {
@@ -461,103 +466,8 @@ class AuthActivity : ComponentActivity() {
     private fun openMain() {
         startActivity(
             Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-        )
-        finish()
-    }
-}
-}code",
-            error
-        )
-
-        return when (code) {
-            "ERROR_EMAIL_ALREADY_IN_USE" ->
-                AuthStrings.t(this, "auth_exists")
-            "ERROR_INVALID_CREDENTIAL",
-            "ERROR_INVALID_LOGIN_CREDENTIALS",
-            "ERROR_WRONG_PASSWORD",
-            "ERROR_USER_NOT_FOUND" ->
-                AuthStrings.t(this, "auth_invalid")
-            "ERROR_INVALID_EMAIL" ->
-                AuthStrings.t(this, "invalid_email")
-            "ERROR_WEAK_PASSWORD" ->
-                AuthStrings.t(this, "auth_weak")
-            "ERROR_NETWORK_REQUEST_FAILED" ->
-                AuthStrings.t(this, "auth_network")
-            "ERROR_OPERATION_NOT_ALLOWED" ->
-                AuthStrings.t(this, "auth_provider_disabled")
-            "ERROR_INVALID_API_KEY" ->
-                AuthStrings.t(this, "auth_invalid_config")
-            "ERROR_APP_NOT_AUTHORIZED" ->
-                AuthStrings.t(this, "auth_app_not_authorized")
-            "ERROR_TOO_MANY_REQUESTS" ->
-                AuthStrings.t(this, "auth_too_many")
-            "ERROR_USER_DISABLED" ->
-                AuthStrings.t(this, "auth_disabled")
-            "ERROR_INTERNAL_ERROR" ->
-                AuthStrings.t(this, "auth_internal")
-            else -> {
-                val safeCode = code.ifBlank { "UNKNOWN" }
-                AuthStrings.t(this, "auth_generic") +
-                    " [Firebase: ${'
-
-    private fun setLoading(loading: Boolean) {
-        submitButton.isEnabled = !loading
-        switchButton.isEnabled = !loading
-        forgotButton?.isEnabled = !loading
-        submitButton.text = if (loading) AuthStrings.t(this, "loading")
-        else if (registerMode) AuthStrings.t(this, "create_account")
-        else AuthStrings.t(this, "sign_in")
-    }
-
-    private fun showMessage(message: String) {
-        messageView?.text = message
-        messageView?.visibility = View.VISIBLE
-    }
-
-    private fun hideMessage() {
-        messageView?.text = ""
-        messageView?.visibility = View.GONE
-    }
-
-    private fun openMain() {
-        startActivity(
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-        )
-        finish()
-    }
-}
-}safeCode]"
-            }
-        }
-    }
-
-    private fun setLoading(loading: Boolean) {
-        submitButton.isEnabled = !loading
-        switchButton.isEnabled = !loading
-        forgotButton?.isEnabled = !loading
-        submitButton.text = if (loading) AuthStrings.t(this, "loading")
-        else if (registerMode) AuthStrings.t(this, "create_account")
-        else AuthStrings.t(this, "sign_in")
-    }
-
-    private fun showMessage(message: String) {
-        messageView?.text = message
-        messageView?.visibility = View.VISIBLE
-    }
-
-    private fun hideMessage() {
-        messageView?.text = ""
-        messageView?.visibility = View.GONE
-    }
-
-    private fun openMain() {
-        startActivity(
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
         )
         finish()

@@ -1,11 +1,11 @@
 {
-  "version": "0.6.2",
+  "version": "0.6.3",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.2-auth-build-fix",
-      "title": "Contas: correção de estabilidade",
-      "description": "Correção do fluxo de autenticação e do build da versão de contas."
+      "id": "v0.6.3-auth-cleanup",
+      "title": "Autenticação estabilizada",
+      "description": "Limpeza do fluxo de autenticação e correção do código de conta para gerar a versão de release."
     }
   ]
 }
