@@ -59,6 +59,7 @@ class ToolDetailActivity : ComponentActivity() {
         when (activeToolId) {
             "cut" -> onCutFileSelected(uri)
             "convert" -> onConverterFileSelected(uri)
+            "extract" -> onExtractVideoSelected(uri)
             "analyzer" -> onAnalyzerFileSelected(uri)
         }
     }
@@ -138,6 +139,7 @@ class ToolDetailActivity : ComponentActivity() {
         header.addView(ViewKit.pill(this, when (tool.id) {
             "cut" -> "EDIT"
             "convert" -> "↔"
+            "extract" -> "EXPORT"
             "recorder" -> AppStrings.t(this, "live")
             else -> "SCAN"
         }, colorRes = accent))
@@ -166,6 +168,7 @@ class ToolDetailActivity : ComponentActivity() {
         when (tool.id) {
             "cut" -> buildCutAction(root)
             "convert" -> buildConverterAction(root)
+            "extract" -> buildExtractAction(root)
             "recorder" -> buildRecorderAction(root)
             "analyzer" -> buildAnalyzerAction(root)
         }
@@ -383,6 +386,33 @@ class ToolDetailActivity : ComponentActivity() {
         }
     }
 
+    private fun buildExtractAction(root: LinearLayout) {
+        val copy = AppStrings.tool(this, "extract")
+        val card = ViewKit.card(this, accentColorRes = R.color.audio_green)
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(ViewKit.dp(this@ToolDetailActivity, 15), ViewKit.dp(this@ToolDetailActivity, 15), ViewKit.dp(this@ToolDetailActivity, 15), ViewKit.dp(this@ToolDetailActivity, 15))
+        }
+        content.addView(ViewKit.pill(this, copy.title.uppercase(), colorRes = R.color.audio_green))
+        content.addView(ViewKit.spacer(this, 8))
+        content.addView(TextView(this).apply { text = copy.description; textSize = 12.5f; setTextColor(ContextCompat.getColor(this@ToolDetailActivity, R.color.audio_muted)) })
+        content.addView(ViewKit.spacer(this, 9))
+        statusView = TextView(this).apply { text = copy.title; textSize = 13.5f; setTextColor(ContextCompat.getColor(this@ToolDetailActivity, R.color.audio_text)) }
+        content.addView(statusView)
+        content.addView(ViewKit.spacer(this, 9))
+        content.addView(ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Choose video"; "fr" -> "Choisir une vidéo"; "es" -> "Elegir vídeo"; "de" -> "Video auswählen"; else -> "Escolher vídeo" }, true, R.color.audio_green).apply { setOnClickListener { filePicker.launch(arrayOf("video/mp4", "video/*")) } })
+        val progress = ProgressBar(this).apply { visibility = View.GONE }
+        content.addView(ViewKit.spacer(this, 8))
+        content.addView(progress)
+        primaryAction = ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Extract and save"; "fr" -> "Extraire et enregistrer"; "es" -> "Extraer y guardar"; "de" -> "Extrahieren und speichern"; else -> "Extrair e guardar" }, true, R.color.audio_green).apply { isEnabled = false; setOnClickListener { selectedUri?.let { performExtract(it, progress) } } }
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(primaryAction)
+        playbackAction = ViewKit.button(this, if (LanguageManager.get(this) == "pt") "▶ Reproduzir resultado" else "▶ Play result", false, R.color.audio_green).apply { visibility = View.GONE; setOnClickListener { lastOutputPath?.let { playFile(File(it)) } } }
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(playbackAction)
+        card.addView(content)
+        root.addView(card)
+    }
     private fun buildRecorderAction(root: LinearLayout) {
         val card = ViewKit.card(this, accentColorRes = R.color.audio_red)
         val content = LinearLayout(this).apply {
@@ -1064,6 +1094,7 @@ class ToolDetailActivity : ComponentActivity() {
     private fun accentFor(toolId: String): Int = when (toolId) {
         "cut" -> R.color.audio_blue
         "convert" -> R.color.audio_purple
+        "extract" -> R.color.audio_green
         "recorder" -> R.color.audio_red
         "analyzer" -> R.color.audio_yellow
         else -> R.color.audio_blue
