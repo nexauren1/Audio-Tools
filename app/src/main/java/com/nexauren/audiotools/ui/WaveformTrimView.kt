@@ -57,6 +57,14 @@ class WaveformTrimView(context: Context) : View(context) {
         onRangeChanged?.invoke(startMs, endMs)
     }
 
+    fun setRange(start: Long, end: Long) {
+        if (durationMs <= 0L) return
+        startMs = start.coerceIn(0L, durationMs - 1L)
+        endMs = end.coerceIn(startMs + 1L, durationMs)
+        invalidate()
+        onRangeChanged?.invoke(startMs, endMs)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat().coerceAtLeast(1f)
