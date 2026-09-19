@@ -454,8 +454,7 @@ class ProDemoActivity : ComponentActivity() {
             return ""
         }
 
-        return "
-Válido até: " +
+        return "\nVálido até: " +
             java.text.SimpleDateFormat(
                 "dd/MM/yyyy HH:mm",
                 Locale.getDefault()
@@ -559,8 +558,7 @@ Válido até: " +
                         duration
                     )
                 )
-                append("
-")
+                append("\n")
 
                 append("Formato: ")
                 append(mime)
