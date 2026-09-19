@@ -1,11 +1,11 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "tools": [],
   "news": [
     {
-      "id": "v1-three-tools",
-      "title": "Audio Tools V1",
-      "description": "Agora com três ferramentas focadas e funcionais: Cortar, Gravar e Analisar."
+      "id": "v0.2.0-three-tools",
+      "title": "Nova versão do Audio Tools",
+      "description": "Interface renovada e três ferramentas funcionais: Cortar áudio, Gravador e Analisar áudio."
     }
   ]
 }
