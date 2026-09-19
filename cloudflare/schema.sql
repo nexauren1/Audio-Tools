@@ -1,9 +1,5 @@
 PRAGMA foreign_keys = ON;
 
-DROP TABLE IF EXISTS credit_transactions;
-DROP TABLE IF EXISTS credit_accounts;
-DROP TABLE IF EXISTS paypal_orders;
-DROP TABLE IF EXISTS tool_usage;
 DROP TABLE IF EXISTS plans;
 
 CREATE TABLE plans (
