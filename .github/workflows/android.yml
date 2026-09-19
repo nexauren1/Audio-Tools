@@ -60,7 +60,8 @@ jobs:
             chmod 600 keystore.properties
             echo "Custom release signing configured."
           else
-            echo "Release signing secrets are not configured; Gradle will use its debug signing fallback."
+            echo "Release signing secrets are required for installable releases."
+            exit 1
           fi
       - name: Build installable debug APK
         if: github.event_name == 'pull_request'
@@ -83,6 +84,7 @@ jobs:
           apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
           test -n "$apksigner"
           "$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk | tee APK_CERTIFICATE.txt
+          grep -F             "21e07ed4d7de65af3db2d1094b65ed2ec87064dc128f2b82d4bf3bb32e9d9eab"             APK_CERTIFICATE.txt >/dev/null
 
       - name: Upload APK artifact
         if: github.event_name != 'pull_request'
