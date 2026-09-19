@@ -336,6 +336,11 @@ class AppPagesActivity : ComponentActivity() {
                 "account"
             ),
             Triple(
+                "Changelog",
+                "Novidades e histórico de versões",
+                "changelog"
+            ),
+            Triple(
                 "Sobre",
                 "Informações sobre o app",
                 "about"
@@ -386,6 +391,13 @@ class AppPagesActivity : ComponentActivity() {
                                     Intent(
                                         this,
                                         AboutActivity::class.java
+                                    )
+                                )
+                        "changelog" ->
+                                startActivity(
+                                    Intent(
+                                        this,
+                                        ChangelogActivity::class.java
                                     )
                                 )
                             else ->
