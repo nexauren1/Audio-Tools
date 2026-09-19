@@ -1,11 +1,14 @@
 <resources>
     <style name="Theme.AudioTools" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">@color/audio_bg</item>
-        <item name="android:navigationBarColor">@color/audio_surface</item>
+        <item name="android:navigationBarColor">@color/audio_bg</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowBackground">@color/audio_bg</item>
         <item name="colorPrimary">@color/audio_primary</item>
+        <item name="colorPrimaryContainer">@color/audio_primary_soft</item>
         <item name="colorSecondary">@color/audio_accent</item>
     </style>
 </resources>
