@@ -1,11 +1,11 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "tools": [],
   "news": [
     {
-      "id": "v0.3.0-visual-workspace",
-      "title": "Novo visual do Audio Tools",
-      "description": "Workspace redesenhado com previews de sinal, cores por ferramenta, botões renovados e feedback de áudio em tempo real."
+      "id": "v0.4.0-audio-workspace",
+      "title": "Audio Tools 0.4.0",
+      "description": "Cortador com timeline arrastável, conversor WAV/M4A, grelha compacta, cinco idiomas e atualizações pelo instalador do Android."
     }
   ]
 }
