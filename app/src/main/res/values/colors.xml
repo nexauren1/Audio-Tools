@@ -16,6 +16,17 @@
     <color name="audio_yellow_soft">#FFF7E4</color>
 
     <color name="audio_purple">#7C5CFF</color>
+    <color name="audio_purple_soft">#F0ECFF</color>
+
+    <color name="audio_orange">#F07A32</color>
+    <color name="audio_orange_soft">#FFF0E7</color>
+
+    <color name="audio_teal">#0F9EA8</color>
+    <color name="audio_teal_soft">#E5FAFC</color>
+
+    <color name="audio_pink">#D64E91</color>
+    <color name="audio_pink_soft">#FBEAF3</color>
+
     <color name="audio_bg">#F6F8FC</color>
     <color name="audio_surface">#FFFFFF</color>
     <color name="audio_surface_alt">#F0F3F8</color>
@@ -26,7 +37,6 @@
     <color name="audio_success_soft">#E7FAF2</color>
     <color name="audio_danger">#BF2432</color>
 
-    <!-- Compatibility aliases used by older screens. -->
     <color name="audio_primary">#2F6BFF</color>
     <color name="audio_primary_dark">#1747C8</color>
     <color name="audio_primary_soft">#EAF0FF</color>
