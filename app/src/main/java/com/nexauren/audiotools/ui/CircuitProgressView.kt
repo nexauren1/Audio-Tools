@@ -15,49 +15,51 @@ import kotlin.math.sin
 class CircuitProgressView(
     context: Context
 ) : View(context) {
+
     private val ringPaint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = dp(3f)
             strokeCap = Paint.Cap.ROUND
+            color =
+                ContextCompat.getColor(
+                    context,
+                    R.color.audio_teal
+                )
         }
 
-    private val dotPaint =
+    private val nodePaint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
+            color =
+                ContextCompat.getColor(
+                    context,
+                    R.color.audio_teal
+                )
         }
 
-    private val trackPaint =
+    private val innerPaint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = dp(1f)
+            color =
+                ContextCompat.getColor(
+                    context,
+                    R.color.audio_border
+                )
         }
 
     private var rotation = 0f
     private var animator: ValueAnimator? = null
 
     init {
-        isVisible = false
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-
-        val tint =
-            ContextCompat.getColor(
-                context,
-                R.color.audio_teal
-            )
-
-        ringPaint.color = tint
-        dotPaint.color = tint
-        trackPaint.color =
-            ContextCompat.getColor(
-                context,
-                R.color.audio_border
-            )
+        visibility = View.GONE
+        importantForAccessibility =
+            IMPORTANT_FOR_ACCESSIBILITY_NO
     }
 
     fun start() {
-        isVisible = true
-
+        visibility = View.VISIBLE
         animator?.cancel()
 
         animator =
@@ -84,7 +86,8 @@ class CircuitProgressView(
     fun stop() {
         animator?.cancel()
         animator = null
-        isVisible = false
+        visibility = View.GONE
+        rotation = 0f
         invalidate()
     }
 
@@ -98,19 +101,23 @@ class CircuitProgressView(
     ) {
         super.onDraw(canvas)
 
-        if (!isVisible) {
+        if (visibility != View.VISIBLE) {
             return
         }
 
         val cx =
             width / 2f
+
         val cy =
             height / 2f
 
         val radius =
-            minOf(width, height) * 0.28f
+            minOf(
+                width,
+                height
+            ) * 0.27f
 
-        val rect =
+        val outer =
             RectF(
                 cx - radius,
                 cy - radius,
@@ -119,9 +126,9 @@ class CircuitProgressView(
             )
 
         canvas.drawArc(
-            rect,
+            outer,
             rotation,
-            260f,
+            265f,
             false,
             ringPaint
         )
@@ -129,8 +136,8 @@ class CircuitProgressView(
         canvas.drawCircle(
             cx,
             cy,
-            radius * 0.38f,
-            trackPaint
+            radius * 0.42f,
+            innerPaint
         )
 
         val nodes = 8
@@ -143,15 +150,17 @@ class CircuitProgressView(
                         (360.0 / nodes)
                 )
 
-            val nx =
+            val x =
                 cx +
                     cos(angle).toFloat() *
-                    radius * 1.22f
+                    radius *
+                    1.22f
 
-            val ny =
+            val y =
                 cy +
                     sin(angle).toFloat() *
-                    radius * 1.22f
+                    radius *
+                    1.22f
 
             val size =
                 if (i % 2 == 0) {
@@ -161,10 +170,10 @@ class CircuitProgressView(
                 }
 
             canvas.drawCircle(
-                nx,
-                ny,
+                x,
+                y,
                 size,
-                dotPaint
+                nodePaint
             )
         }
     }
@@ -174,37 +183,4 @@ class CircuitProgressView(
     ): Float =
         value *
             resources.displayMetrics.density
-
-    private val isVisible: Boolean
-        get() = visibility == View.VISIBLE
-
-    private var isVisibleProperty: Boolean = false
-
-    private fun setVisible(
-        value: Boolean
-    ) {
-        visibility =
-            if (value) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-
-        isVisibleProperty = value
-    }
-
-    private val visibleProperty
-        get() = isVisibleProperty
-
-    private var visibilityState: Boolean
-        get() = isVisibleProperty
-        set(value) {
-            setVisible(value)
-        }
-
-    private var View.isVisible: Boolean
-        get() = visibilityState
-        set(value) {
-            visibilityState = value
-        }
 }
