@@ -182,7 +182,7 @@ object AppStrings {
     fun tool(context: Context, id: String): ToolCopy {
         return when (id) {
             "cut" -> ToolCopy(
-                t(context, if (LanguageManager.get(context) == "pt") "edit_tool" else "cut_precise"),
+                when (LanguageManager.get(context)) { "en" -> "Cut audio"; "fr" -> "Couper l’audio"; "es" -> "Cortar audio"; "de" -> "Audio schneiden"; else -> "Cortar áudio" },
                 when (LanguageManager.get(context)) {
                     "en" -> "Set a range visually, then export a clean M4A copy."
                     "fr" -> "Définis une plage visuellement puis exporte une copie M4A."
