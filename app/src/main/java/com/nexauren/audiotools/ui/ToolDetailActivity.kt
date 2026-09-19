@@ -193,6 +193,7 @@ class ToolDetailActivity : ComponentActivity() {
         }
         val startField = timeField("Início", "0")
         val endField = timeField("Fim", "0")
+        cutEndInput = endField.second
         fields.addView(startField.first, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
             rightMargin = ViewKit.dp(this@ToolDetailActivity, 8)
         })
