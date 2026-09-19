@@ -1,11 +1,11 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "tools": [],
   "news": [
     {
-      "id": "v0.2.0-three-tools",
-      "title": "Nova versão do Audio Tools",
-      "description": "Interface renovada e três ferramentas funcionais: Cortar áudio, Gravador e Analisar áudio."
+      "id": "v0.3.0-visual-workspace",
+      "title": "Novo visual do Audio Tools",
+      "description": "Workspace redesenhado com previews de sinal, cores por ferramenta, botões renovados e feedback de áudio em tempo real."
     }
   ]
 }
