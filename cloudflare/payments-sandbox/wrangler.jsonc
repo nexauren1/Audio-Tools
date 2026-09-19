@@ -1,0 +1,24 @@
+{
+  "name": "audio-tools-payments-sandbox",
+  "main": "./worker.js",
+  "compatibility_date": "2026-09-19",
+  "vars": {
+    "FIREBASE_PROJECT_ID": "audio-tools-e725e",
+    "PAYPAL_ENVIRONMENT": "sandbox",
+    "PRO_PRICE_USD": "5.00",
+    "PRO_DURATION_DAYS": "30"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "audio-tools-db",
+      "database_id": "cd686bb0-45ca-4449-9760-ac7044961f24"
+    }
+  ],
+  "secrets": {
+    "required": [
+      "PAYPAL_CLIENT_ID",
+      "PAYPAL_CLIENT_SECRET"
+    ]
+  }
+}
