@@ -8,6 +8,12 @@
     "PRO_PRICE_USD": "5.00",
     "PRO_DURATION_DAYS": "30"
   },
+  "secrets": {
+    "required": [
+      "PAYPAL_CLIENT_ID",
+      "PAYPAL_CLIENT_SECRET"
+    ]
+  },
   "d1_databases": [
     {
       "binding": "DB",
