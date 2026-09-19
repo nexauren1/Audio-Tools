@@ -1,0 +1,45 @@
+name: Validate Audio Tools Cloudflare Worker
+
+on:
+  pull_request:
+    paths:
+      - "worker.js"
+      - "wrangler.jsonc"
+      - "cloudflare/schema.sql"
+  push:
+    branches:
+      - "paypal-sandbox"
+    paths:
+      - "worker.js"
+      - "wrangler.jsonc"
+      - "cloudflare/schema.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Check Worker syntax
+        run: node --check worker.js
+
+      - name: Check Wrangler configuration
+        run: |
+          npx --yes wrangler deploy --dry-run --outdir=./.wrangler-dry-run
+          
+      - name: Check D1 schema
+        run: |
+          test -s cloudflare/schema.sql
+          grep -q "CREATE TABLE IF NOT EXISTS entitlements" cloudflare/schema.sql
+          grep -q "CREATE TABLE IF NOT EXISTS paypal_orders" cloudflare/schema.sql

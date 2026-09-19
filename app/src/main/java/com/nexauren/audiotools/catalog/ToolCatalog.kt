@@ -11,7 +11,8 @@ object ToolCatalog {
         AudioTool("convert", "02"),
         AudioTool("extract", "03"),
         AudioTool("recorder", "04"),
-        AudioTool("analyzer", "05")
+        AudioTool("analyzer", "05"),
+        AudioTool("pro-inspector", "06")
     )
 
     fun get(id: String): AudioTool? = tools.firstOrNull { it.id == id }
