@@ -6,10 +6,11 @@
       "title": "Nova navegação e Home",
       "description": "Home em grelha 3x2, menu no topo e páginas organizadas."
     },
-    "favorites",
-    "history",
-    "profile",
-    "support"
+    {
+      "id": "v0.11.0-storage",
+      "title": "Novo armazenamento",
+      "description": "Resultados guardados em pastas próprias de cada ferramenta no armazenamento partilhado."
+    }
   ],
   "news": [
     {
