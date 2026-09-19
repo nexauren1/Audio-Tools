@@ -1,11 +1,11 @@
 {
-  "version": "0.8.0",
+  "version": "0.8.1",
   "tools": ["pro-inspector"],
   "news": [
     {
-      "id": "v0.8.0-pro-payments-sandbox",
-      "title": "Pro + PayPal Sandbox",
-      "description": "Audio Tools now has a Pro-only example tool, Firebase-authenticated PayPal Sandbox checkout, D1 entitlement storage and safer server-side payment validation."
+      "id": "v0.8.1-paypal-worker-endpoint",
+      "title": "Pro + PayPal Sandbox — conexão corrigida",
+      "description": "Corrige a ligação ao Worker Audio Tools, mantém Firebase como sistema de contas e reforça o backend Pro com PayPal Sandbox e D1."
     }
   ]
 }
