@@ -595,6 +595,7 @@ object ViewKit {
 
     fun menuTile(
         context: Context,
+        symbol: String,
         label: String,
         description: String,
         colorRes: Int,
@@ -622,7 +623,7 @@ object ViewKit {
                 addView(
                     iconBadge(
                         context,
-                        label.take(1),
+                        symbol,
                         colorRes
                     ).apply {
                         layoutParams =
