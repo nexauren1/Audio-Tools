@@ -1566,11 +1566,6 @@ class AppPagesActivity : ComponentActivity() {
         card.addView(row)
 
         card.setOnClickListener {
-            UsageStore.record(
-                this,
-                tool.id
-            )
-
             openToolOrUpgrade(
                 tool,
                 card
@@ -1722,6 +1717,8 @@ class AppPagesActivity : ComponentActivity() {
     private fun openTool(
         tool: AudioTool
     ) {
+        UsageStore.record(this, tool.id)
+
         if (tool.id == "pro-inspector") {
             startActivity(
                 ProDemoActivity.intent(this)
