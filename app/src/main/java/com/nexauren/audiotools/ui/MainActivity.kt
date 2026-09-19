@@ -250,7 +250,13 @@ class MainActivity : ComponentActivity() {
         val accent = toolAccent(tool.id)
         val copy = AppStrings.tool(this, tool.id)
         val card = ViewKit.card(this, clickable = true, accentColorRes = accent).apply {
-            setOnClickListener { startActivity(ToolDetailActivity.intent(this@MainActivity, tool.id)) }
+            setOnClickListener {
+                if (tool.id == "pro-inspector") {
+                    startActivity(ProDemoActivity.intent(this@MainActivity))
+                } else {
+                    startActivity(ToolDetailActivity.intent(this@MainActivity, tool.id))
+                }
+            }
         }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -369,6 +375,7 @@ class MainActivity : ComponentActivity() {
         "extract" -> R.color.audio_green
         "recorder" -> R.color.audio_red
         "analyzer" -> R.color.audio_yellow
+        "pro-inspector" -> R.color.audio_purple
         else -> R.color.audio_blue
     }
 
@@ -378,6 +385,7 @@ class MainActivity : ComponentActivity() {
         "extract" -> "↥"
         "recorder" -> "●"
         "analyzer" -> "⌁"
+        "pro-inspector" -> "★"
         else -> "•"
     }
 
