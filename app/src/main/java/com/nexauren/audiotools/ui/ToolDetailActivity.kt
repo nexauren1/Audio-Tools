@@ -1585,7 +1585,9 @@ class ToolDetailActivity : ComponentActivity() {
         } catch (_: Exception) {
             output.delete()
             releaseRecorder()
-            statusView?.text = AppStrings.t(this, "recording_error")
+            processingView?.stop()
+            statusView?.text =
+                "Não foi possível iniciar a gravação."
         }
     }
 
@@ -1598,6 +1600,7 @@ class ToolDetailActivity : ComponentActivity() {
             primaryAction?.text = AppStrings.t(this, "record_start")
             primaryAction?.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red))
             signalPreview?.stop()
+            processingView?.stop()
             playbackAction?.visibility = View.VISIBLE
             playbackAction?.text = AppStrings.t(this, "preview_result")
             statusView?.text = AppStrings.t(this, "preview_ready")
