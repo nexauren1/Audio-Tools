@@ -20,6 +20,15 @@ val hasReleaseSigning = !releaseStoreFile.isNullOrBlank() &&
     !releaseKeyAlias.isNullOrBlank() &&
     !releaseKeyPassword.isNullOrBlank()
 
+val ciRunNumber =
+    System.getenv("GITHUB_RUN_NUMBER")
+        ?.toIntOrNull()
+
+val automaticVersionCode =
+    ciRunNumber?.let {
+        1000 + it
+    } ?: 19
+
 android {
     namespace = "com.nexauren.audiotools"
     compileSdk = 37
@@ -28,8 +37,8 @@ android {
         applicationId = "com.nexauren.audiotools"
         minSdk = 23
         targetSdk = 37
-        versionCode = 18
-        versionName = "0.9.0"
+        versionCode = automaticVersionCode
+        versionName = "0.10.0"
         buildConfigField(
             "String",
             "PAYMENTS_BASE_URL",
