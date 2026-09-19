@@ -200,11 +200,13 @@ class ToolDetailActivity : ComponentActivity() {
         specCard.addView(spec)
         root.addView(ViewKit.spacer(this, 10))
         root.addView(specCard)
-\n        root.addView(ViewKit.spacer(this, 10))
+
+        root.addView(ViewKit.spacer(this, 10))
         root.addView(ViewKit.button(this, "Partilhar resultado", false, accent).apply {
             setOnClickListener { shareLastResult() }
         })
-\n        setContentView(ScrollView(this).apply {
+
+        setContentView(ScrollView(this).apply {
             isFillViewport = true
             overScrollMode = ScrollView.OVER_SCROLL_NEVER
             addView(root)
