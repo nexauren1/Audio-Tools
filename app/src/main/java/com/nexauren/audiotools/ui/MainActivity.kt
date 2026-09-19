@@ -856,11 +856,7 @@ class MainActivity : ComponentActivity() {
                         .title,
                     toolAccent(tool.id)
                 ) {
-                    UsageStore.record(
-                        this@MainActivity,
-                        tool.id
-                    )
-                    openToolOrUpgrade(
+openToolOrUpgrade(
                         tool,
                         row
                     )
@@ -915,11 +911,7 @@ class MainActivity : ComponentActivity() {
                         .title,
                     toolAccent(tool.id)
                 ) {
-                    UsageStore.record(
-                        this@MainActivity,
-                        tool.id
-                    )
-                    openToolOrUpgrade(
+openToolOrUpgrade(
                         tool,
                         row
                     )
