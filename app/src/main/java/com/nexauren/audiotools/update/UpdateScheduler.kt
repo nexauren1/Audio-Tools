@@ -12,6 +12,20 @@ object UpdateScheduler {
     private const val UNIQUE_WORK = "audio_tools_network_updates"
 
     fun schedule(context: Context, delaySeconds: Long = 30L) {
+        val enabled =
+            context.getSharedPreferences(
+                "settings",
+                Context.MODE_PRIVATE
+            ).getBoolean(
+                "auto_update_check",
+                true
+            )
+
+        if (!enabled) {
+            cancel(context)
+            return
+        }
+
         val request = OneTimeWorkRequestBuilder<UpdateWorker>()
             .setConstraints(
                 Constraints.Builder()
@@ -26,5 +40,12 @@ object UpdateScheduler {
             ExistingWorkPolicy.REPLACE,
             request
         )
+    }
+
+    fun cancel(
+        context: Context
+    ) {
+        WorkManager.getInstance(context)
+            .cancelUniqueWork(UNIQUE_WORK)
     }
 }
