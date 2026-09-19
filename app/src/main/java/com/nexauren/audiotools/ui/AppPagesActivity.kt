@@ -30,6 +30,7 @@ import com.nexauren.audiotools.R
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.payments.PaymentClient
+import java.io.File
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -975,8 +976,28 @@ class AppPagesActivity : ComponentActivity() {
         hero.addView(heroContent)
         root.addView(hero)
 
-        user.photoUrl?.let {
-            loadAvatar(it)
+        val localAvatar =
+            getSharedPreferences(
+                "audio_tools_personal",
+                MODE_PRIVATE
+            ).getString(
+                "profile_avatar_file",
+                ""
+            )
+
+        when {
+            localAvatar.isNotBlank() &&
+                File(localAvatar).exists() ->
+                avatar?.setImageURI(
+                    Uri.fromFile(
+                        File(localAvatar)
+                    )
+                )
+
+            user.photoUrl != null ->
+                loadAvatar(
+                    user.photoUrl.toString()
+                )
         }
 
         root.addView(
@@ -1809,10 +1830,20 @@ class AppPagesActivity : ComponentActivity() {
             )?.toMutableSet()
                 ?: mutableSetOf()
 
+        val user =
+            auth.currentUser
+
         existing.add(
             System.currentTimeMillis().toString() +
                 "|" +
                 selectedSupportType +
+                "|" +
+                (user?.uid ?: "") +
+                "|" +
+                (user?.email ?: "") +
+                "|" +
+                "v" +
+                com.nexauren.audiotools.BuildConfig.VERSION_NAME +
                 "|" +
                 subject +
                 "|" +
@@ -1914,6 +1945,42 @@ class AppPagesActivity : ComponentActivity() {
         val user =
             auth.currentUser
                 ?: return
+
+        val localFile =
+            File(
+                filesDir,
+                "profile_avatar_" +
+                    user.uid.hashCode() +
+                    ".img"
+            )
+
+        runCatching {
+            contentResolver
+                .openInputStream(uri)
+                ?.use { input ->
+                    localFile.outputStream()
+                        .use { output ->
+                            input.copyTo(output)
+                        }
+                }
+        }.onFailure {
+            Toast.makeText(
+                this,
+                "Não foi possível guardar a foto neste dispositivo.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        getSharedPreferences(
+            "audio_tools_personal",
+            MODE_PRIVATE
+        ).edit()
+            .putString(
+                "profile_avatar_file",
+                localFile.absolutePath
+            )
+            .apply()
 
         user.updateProfile(
             UserProfileChangeRequest.Builder()
