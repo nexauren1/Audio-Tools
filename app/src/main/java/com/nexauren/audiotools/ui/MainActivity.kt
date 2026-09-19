@@ -185,8 +185,7 @@ class MainActivity : ComponentActivity() {
         }
         content.addView(heroPreview)
 
-        content.addView(ViewKit.title(this, "O teu áudio,
-no teu controlo.", 28f))
+        content.addView(ViewKit.title(this, "O teu áudio,\nno teu controlo.", 28f))
         content.addView(ViewKit.spacer(this, 8))
         content.addView(ViewKit.subtitle(this, "Corta, grava e analisa diretamente no telemóvel, com feedback visual em cada etapa."))
 
