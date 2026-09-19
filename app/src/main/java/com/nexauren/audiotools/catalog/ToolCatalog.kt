@@ -9,8 +9,9 @@ object ToolCatalog {
     val tools = listOf(
         AudioTool("cut", "01"),
         AudioTool("convert", "02"),
-        AudioTool("recorder", "03"),
-        AudioTool("analyzer", "04")
+        AudioTool("extract", "03"),
+        AudioTool("recorder", "04"),
+        AudioTool("analyzer", "05")
     )
 
     fun get(id: String): AudioTool? = tools.firstOrNull { it.id == id }
