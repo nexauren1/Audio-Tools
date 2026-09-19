@@ -1,0 +1,39 @@
+name: Validate PayPal Sandbox Worker
+
+on:
+  pull_request:
+    paths:
+      - "cloudflare/payments-sandbox/**"
+  push:
+    branches:
+      - "paypal-sandbox"
+    paths:
+      - "cloudflare/payments-sandbox/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Check Worker syntax
+        run: node --check cloudflare/payments-sandbox/worker.js
+
+      - name: Check Wrangler configuration
+        run: |
+          cd cloudflare/payments-sandbox
+          npx --yes wrangler deploy --dry-run --outdir=./.wrangler-dry-run --config ./wrangler.jsonc
+
+      - name: Check database schema is present
+        run: test -s cloudflare/payments-sandbox/schema.sql
