@@ -996,6 +996,7 @@ class AppPagesActivity : ComponentActivity() {
                 "profile_avatar_file",
                 ""
             )
+                ?: ""
 
         when {
             localAvatar.isNotBlank() &&
@@ -1008,7 +1009,7 @@ class AppPagesActivity : ComponentActivity() {
 
             user.photoUrl != null ->
                 loadAvatar(
-                    user.photoUrl.toString()
+                    user.photoUrl!!
                 )
         }
 
