@@ -292,6 +292,11 @@ class AppPagesActivity : ComponentActivity() {
 
         val pages = listOf(
             Triple(
+                "Home",
+                "Voltar ao painel principal",
+                "home"
+            ),
+            Triple(
                 "Tools",
                 "Todas as ferramentas de áudio",
                 PAGE_TOOLS
@@ -366,6 +371,13 @@ class AppPagesActivity : ComponentActivity() {
                         tileColor(index)
                     ) {
                         when (item.third) {
+                            "home" ->
+                                startActivity(
+                                    Intent(
+                                        this,
+                                        MainActivity::class.java
+                                    )
+                                )
                             "plans" ->
                                 startActivity(
                                     Intent(
