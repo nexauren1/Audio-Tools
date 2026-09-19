@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: audio-tools-android-\${{ github.ref }}
+  group: audio-tools-android-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
       - name: Restore release signing key
         if: github.event_name != 'pull_request'
         env:
-          ANDROID_KEYSTORE_BASE64: \${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           test -n "$ANDROID_KEYSTORE_BASE64"
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > audio-tools-release.jks
@@ -43,15 +43,15 @@ jobs:
       - name: Verify signing configuration
         if: github.event_name != 'pull_request'
         env:
-          ANDROID_KEYSTORE_PASSWORD: \${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: \${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: \${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           test -n "$ANDROID_KEYSTORE_PASSWORD"
           test -n "$ANDROID_KEY_ALIAS"
           test -n "$ANDROID_KEY_PASSWORD"
           test -s audio-tools-release.jks
-          keytool -list -keystore audio-tools-release.jks             -storepass "$ANDROID_KEYSTORE_PASSWORD"             -alias "$ANDROID_KEY_ALIAS" >/dev/null
+          keytool -list -keystore audio-tools-release.jks -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
 
       - name: Build installable debug APK
         if: github.event_name == 'pull_request'
@@ -60,9 +60,9 @@ jobs:
       - name: Build installable release APK
         if: github.event_name != 'pull_request'
         env:
-          ANDROID_KEYSTORE_PASSWORD: \${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: \${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: \${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle assembleRelease --stacktrace
 
       - name: Upload APK artifact
@@ -94,10 +94,10 @@ jobs:
         if: steps.release.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: \${{ steps.release.outputs.tag_name }}
-          target_commitish: \${{ github.sha }}
-          name: Audio Tools \${{ steps.release.outputs.tag_name }}
+          tag_name: ${{ steps.release.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: Audio Tools ${{ steps.release.outputs.tag_name }}
           files: app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: \${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
