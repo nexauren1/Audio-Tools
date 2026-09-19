@@ -293,7 +293,7 @@ class AuthActivity : ComponentActivity() {
             R.color.audio_blue
         )
         googleButton?.setOnClickListener { signInWithGoogle() }
-        content.addView(googleButton)
+        googleButton?.let { content.addView(it) }
         content.addView(ViewKit.spacer(this, 8))
 
         switchButton = ViewKit.button(
