@@ -611,6 +611,92 @@ class ToolDetailActivity : ComponentActivity() {
         playbackAction?.visibility = View.GONE
     }
 
+    private fun onExtractVideoSelected(uri: Uri) {
+        selectedUri = uri
+        lastOutputPath = null
+        statusView?.text = displayName(uri)
+        primaryAction?.isEnabled = true
+        playbackAction?.visibility = View.GONE
+    }
+
+    private fun performExtract(uri: Uri, progress: ProgressBar) {
+        primaryAction?.isEnabled = false
+        progress.visibility = View.VISIBLE
+        statusView?.text = when (LanguageManager.get(this)) { "en" -> "Extracting audio…"; "fr" -> "Extraction de l’audio…"; "es" -> "Extrayendo audio…"; "de" -> "Audio wird extrahiert…"; else -> "A extrair áudio…" }
+        worker.execute {
+            try {
+                val sourceName = displayName(uri).substringBeforeLast(".").ifBlank { "video" }
+                val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
+                val output = File(dir, sourceName + "_audio_" + System.currentTimeMillis() + ".m4a")
+                extractAac(uri, output)
+                lastOutputPath = output.absolutePath
+                mainHandler.post {
+                    progress.visibility = View.GONE
+                    primaryAction?.isEnabled = true
+                    playbackAction?.visibility = View.VISIBLE
+                    statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
+                        "en" -> "Extraction complete"
+                        "fr" -> "Extraction terminée"
+                        "es" -> "Extracción completada"
+                        "de" -> "Extraktion abgeschlossen"
+                        else -> "Extração concluída"
+                    } + " • " + output.name
+                }
+            } catch (_: Exception) {
+                mainHandler.post {
+                    progress.visibility = View.GONE
+                    primaryAction?.isEnabled = true
+                    statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
+                        "en" -> "Could not extract audio from this video."
+                        "fr" -> "Impossible d’extraire l’audio de cette vidéo."
+                        "es" -> "No se pudo extraer el audio de este vídeo."
+                        "de" -> "Audio konnte aus diesem Video nicht extrahiert werden."
+                        else -> "Não foi possível extrair o áudio deste vídeo."
+                    }
+                }
+            }
+        }
+    }
+
+    private fun extractAac(uri: Uri, output: File) {
+        val extractor = MediaExtractor()
+        var muxer: MediaMuxer? = null
+        var started = false
+        try {
+            extractor.setDataSource(this, uri, null)
+            var trackIndex = -1
+            for (i in 0 until extractor.trackCount) {
+                val f = extractor.getTrackFormat(i)
+                if (f.getString(MediaFormat.KEY_MIME).orEmpty() == "audio/mp4a-latm") { trackIndex = i; break }
+            }
+            require(trackIndex >= 0)
+            extractor.selectTrack(trackIndex)
+            val format = extractor.getTrackFormat(trackIndex)
+            muxer = MediaMuxer(output.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            val outTrack = muxer.addTrack(format)
+            muxer.start(); started = true
+            val maxInput = if (format.containsKey(MediaFormat.KEY_MAX_INPUT_SIZE)) max(64 * 1024, format.getInteger(MediaFormat.KEY_MAX_INPUT_SIZE)) else 1024 * 1024
+            val buffer = java.nio.ByteBuffer.allocate(maxInput)
+            val info = MediaCodec.BufferInfo()
+            var firstTime = -1L
+            while (true) {
+                val sampleTime = extractor.sampleTime
+                if (sampleTime < 0L) break
+                buffer.clear()
+                val size = extractor.readSampleData(buffer, 0)
+                if (size <= 0) break
+                if (firstTime < 0L) firstTime = sampleTime
+                info.offset = 0; info.size = size; info.flags = extractor.sampleFlags; info.presentationTimeUs = (sampleTime - firstTime).coerceAtLeast(0L)
+                muxer.writeSampleData(outTrack, buffer, info)
+                extractor.advance()
+            }
+        } finally {
+            if (started) try { muxer?.stop() } catch (_: Exception) {}
+            try { muxer?.release() } catch (_: Exception) {}
+            extractor.release()
+        }
+        require(output.exists() && output.length() > 0L)
+    }
     private fun performConversion(uri: Uri, target: String, progress: ProgressBar) {
         primaryAction?.isEnabled = false
         progress.visibility = View.VISIBLE
