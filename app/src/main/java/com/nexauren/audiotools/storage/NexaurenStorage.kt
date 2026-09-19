@@ -338,7 +338,7 @@ object NexaurenStorage {
                 "_"
             )
             .replace(
-                Regex("\s+"),
+                Regex("\\s+"),
                 " "
             )
             .take(80)
