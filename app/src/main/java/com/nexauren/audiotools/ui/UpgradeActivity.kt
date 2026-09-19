@@ -819,4 +819,21 @@ class UpgradeActivity : ComponentActivity() {
             }
         }
     }
+
+    companion object {
+        private const val EXTRA_REQUIRED_PLAN =
+            "required_plan"
+
+        fun intent(
+            context: Context,
+            requiredPlan: String = "PRO"
+        ): Intent =
+            Intent(
+                context,
+                UpgradeActivity::class.java
+            ).putExtra(
+                EXTRA_REQUIRED_PLAN,
+                requiredPlan
+            )
+    }
 }
