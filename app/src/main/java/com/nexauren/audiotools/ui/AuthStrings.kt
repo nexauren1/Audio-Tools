@@ -39,6 +39,13 @@ object AuthStrings {
             "auth_weak" to "Escolhe uma palavra-passe mais forte.",
             "auth_network" to "Verifica a tua ligação à internet e tenta novamente.",
             "auth_generic" to "Não foi possível concluir a autenticação agora.",
+            "auth_config" to "Não foi possível iniciar o Firebase nesta versão. Reinstala a versão mais recente do Audio Tools.",
+            "auth_provider_disabled" to "O login por e-mail/senha está desativado no Firebase. Ativa esse provedor no Firebase Console.",
+            "auth_invalid_config" to "A configuração do Firebase desta versão não foi aceite pelo projeto.",
+            "auth_app_not_authorized" to "Esta versão do Audio Tools não está autorizada no projeto Firebase.",
+            "auth_too_many" to "Muitas tentativas foram feitas. Tenta novamente mais tarde.",
+            "auth_disabled" to "Esta conta está desativada.",
+            "auth_internal" to "O Firebase devolveu um erro interno. Tenta novamente."
             "reset_invalid" to "Introduz o e-mail da tua conta primeiro.",
             "profile_save_failed" to "Conta criada. O perfil será sincronizado quando houver ligação.",
             "security_note" to "A autenticação é gerida pelo Firebase. A palavra-passe não é guardada no Audio Tools."

@@ -13,8 +13,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -34,7 +36,17 @@ class AuthActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        auth = FirebaseAuth.getInstance()
+        try {
+            if (FirebaseApp.getApps(this).isEmpty()) {
+                FirebaseApp.initializeApp(this)
+            }
+            auth = FirebaseAuth.getInstance()
+        } catch (exception: Exception) {
+            Log.e("AuthActivity", "Firebase initialization failed", exception)
+            buildUi()
+            showMessage(AuthStrings.t(this, "auth_config"))
+            return
+        }
 
         if (auth.currentUser != null) {
             openMain()
@@ -379,18 +391,107 @@ class AuthActivity : ComponentActivity() {
     }
 
     private fun authError(error: Exception?): String {
-        val code = (error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
-        return when {
-            code.contains("EMAIL_ALREADY_IN_USE") ->
+        val authError =
+            error as? com.google.firebase.auth.FirebaseAuthException
+        val code = authError?.errorCode.orEmpty()
+
+        Log.e(
+            "AuthActivity",
+            "Firebase Auth failed. code=${'
+
+    private fun setLoading(loading: Boolean) {
+        submitButton.isEnabled = !loading
+        switchButton.isEnabled = !loading
+        forgotButton?.isEnabled = !loading
+        submitButton.text = if (loading) AuthStrings.t(this, "loading")
+        else if (registerMode) AuthStrings.t(this, "create_account")
+        else AuthStrings.t(this, "sign_in")
+    }
+
+    private fun showMessage(message: String) {
+        messageView?.text = message
+        messageView?.visibility = View.VISIBLE
+    }
+
+    private fun hideMessage() {
+        messageView?.text = ""
+        messageView?.visibility = View.GONE
+    }
+
+    private fun openMain() {
+        startActivity(
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+        )
+        finish()
+    }
+}
+}code",
+            error
+        )
+
+        return when (code) {
+            "ERROR_EMAIL_ALREADY_IN_USE" ->
                 AuthStrings.t(this, "auth_exists")
-            code.contains("INVALID_CREDENTIAL") ||
-                code.contains("INVALID_LOGIN_CREDENTIALS") ->
+            "ERROR_INVALID_CREDENTIAL",
+            "ERROR_INVALID_LOGIN_CREDENTIALS",
+            "ERROR_WRONG_PASSWORD",
+            "ERROR_USER_NOT_FOUND" ->
                 AuthStrings.t(this, "auth_invalid")
-            code.contains("WEAK_PASSWORD") ->
+            "ERROR_INVALID_EMAIL" ->
+                AuthStrings.t(this, "invalid_email")
+            "ERROR_WEAK_PASSWORD" ->
                 AuthStrings.t(this, "auth_weak")
-            code.contains("NETWORK") ->
+            "ERROR_NETWORK_REQUEST_FAILED" ->
                 AuthStrings.t(this, "auth_network")
-            else -> AuthStrings.t(this, "auth_generic")
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                AuthStrings.t(this, "auth_provider_disabled")
+            "ERROR_INVALID_API_KEY" ->
+                AuthStrings.t(this, "auth_invalid_config")
+            "ERROR_APP_NOT_AUTHORIZED" ->
+                AuthStrings.t(this, "auth_app_not_authorized")
+            "ERROR_TOO_MANY_REQUESTS" ->
+                AuthStrings.t(this, "auth_too_many")
+            "ERROR_USER_DISABLED" ->
+                AuthStrings.t(this, "auth_disabled")
+            "ERROR_INTERNAL_ERROR" ->
+                AuthStrings.t(this, "auth_internal")
+            else -> {
+                val safeCode = code.ifBlank { "UNKNOWN" }
+                AuthStrings.t(this, "auth_generic") +
+                    " [Firebase: ${'
+
+    private fun setLoading(loading: Boolean) {
+        submitButton.isEnabled = !loading
+        switchButton.isEnabled = !loading
+        forgotButton?.isEnabled = !loading
+        submitButton.text = if (loading) AuthStrings.t(this, "loading")
+        else if (registerMode) AuthStrings.t(this, "create_account")
+        else AuthStrings.t(this, "sign_in")
+    }
+
+    private fun showMessage(message: String) {
+        messageView?.text = message
+        messageView?.visibility = View.VISIBLE
+    }
+
+    private fun hideMessage() {
+        messageView?.text = ""
+        messageView?.visibility = View.GONE
+    }
+
+    private fun openMain() {
+        startActivity(
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+        )
+        finish()
+    }
+}
+}safeCode]"
+            }
         }
     }
 

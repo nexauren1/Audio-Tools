@@ -1,11 +1,11 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.0-accounts",
-      "title": "Contas do Audio Tools",
-      "description": "O Audio Tools agora inclui criação de conta, login, sessão persistente, recuperação de palavra-passe e perfil sincronizado com Firebase."
+      "id": "v0.6.1-auth-fix",
+      "title": "Autenticação corrigida",
+      "description": "Melhorias no arranque do Firebase e no tratamento dos erros de criação de conta e login."
     }
   ]
 }
