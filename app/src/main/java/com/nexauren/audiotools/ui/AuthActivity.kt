@@ -391,13 +391,53 @@ class AuthActivity : ComponentActivity() {
     }
 
     private fun authError(error: Exception?): String {
-        val authError =
+        val authException =
             error as? com.google.firebase.auth.FirebaseAuthException
-        val code = authError?.errorCode.orEmpty()
+        val code = authException?.errorCode.orEmpty()
 
         Log.e(
             "AuthActivity",
-            "Firebase Auth failed. code=${'
+            "Firebase Auth failed. code=$code",
+            error
+        )
+
+        return when (code) {
+            "ERROR_EMAIL_ALREADY_IN_USE" ->
+                AuthStrings.t(this, "auth_exists")
+            "ERROR_INVALID_CREDENTIAL",
+            "ERROR_INVALID_LOGIN_CREDENTIALS",
+            "ERROR_WRONG_PASSWORD",
+            "ERROR_USER_NOT_FOUND" ->
+                AuthStrings.t(this, "auth_invalid")
+            "ERROR_INVALID_EMAIL" ->
+                AuthStrings.t(this, "invalid_email")
+            "ERROR_WEAK_PASSWORD" ->
+                AuthStrings.t(this, "auth_weak")
+            "ERROR_NETWORK_REQUEST_FAILED" ->
+                AuthStrings.t(this, "auth_network")
+            "ERROR_OPERATION_NOT_ALLOWED" ->
+                AuthStrings.t(this, "auth_provider_disabled")
+            "ERROR_INVALID_API_KEY",
+            "ERROR_API_KEY_INVALID",
+            "ERROR_API_KEY_SERVICE_BLOCKED" ->
+                AuthStrings.t(this, "auth_invalid_config")
+            "ERROR_APP_NOT_AUTHORIZED",
+            "ERROR_INVALID_APP_CREDENTIAL" ->
+                AuthStrings.t(this, "auth_app_not_authorized")
+            "ERROR_TOO_MANY_REQUESTS" ->
+                AuthStrings.t(this, "auth_too_many")
+            "ERROR_USER_DISABLED" ->
+                AuthStrings.t(this, "auth_disabled")
+            "ERROR_API_NOT_AVAILABLE",
+            "ERROR_INTERNAL_ERROR" ->
+                AuthStrings.t(this, "auth_internal")
+            else -> {
+                val safeCode = code.ifBlank { "UNKNOWN" }
+                AuthStrings.t(this, "auth_generic") +
+                    " [Firebase: $safeCode]"
+            }
+        }
+    }
 
     private fun setLoading(loading: Boolean) {
         submitButton.isEnabled = !loading

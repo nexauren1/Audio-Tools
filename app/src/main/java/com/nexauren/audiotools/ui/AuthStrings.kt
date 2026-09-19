@@ -45,7 +45,7 @@ object AuthStrings {
             "auth_app_not_authorized" to "Esta versão do Audio Tools não está autorizada no projeto Firebase.",
             "auth_too_many" to "Muitas tentativas foram feitas. Tenta novamente mais tarde.",
             "auth_disabled" to "Esta conta está desativada.",
-            "auth_internal" to "O Firebase devolveu um erro interno. Tenta novamente."
+            "auth_internal" to "O Firebase devolveu um erro interno. Tenta novamente.",
             "reset_invalid" to "Introduz o e-mail da tua conta primeiro.",
             "profile_save_failed" to "Conta criada. O perfil será sincronizado quando houver ligação.",
             "security_note" to "A autenticação é gerida pelo Firebase. A palavra-passe não é guardada no Audio Tools."
