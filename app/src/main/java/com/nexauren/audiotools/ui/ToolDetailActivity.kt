@@ -1241,7 +1241,17 @@ class ToolDetailActivity : ComponentActivity() {
                 .setPositiveButton(
                     "Escolher pasta"
                 ) { _, _ ->
-                    directoryPicker.launch(null)
+                    directoryPicker.launch(
+                        Intent(
+                            Intent.ACTION_OPEN_DOCUMENT_TREE
+                        ).apply {
+                            addFlags(
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+                            )
+                        }
+                    )
                 }
                 .show()
 
