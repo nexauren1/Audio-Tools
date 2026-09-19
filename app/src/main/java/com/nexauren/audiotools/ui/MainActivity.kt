@@ -1,6 +1,6 @@
-import android.Manifest
 package com.nexauren.audiotools.ui
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
