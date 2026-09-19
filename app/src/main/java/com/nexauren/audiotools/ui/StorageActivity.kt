@@ -1,8 +1,6 @@
 package com.nexauren.audiotools.ui
 
-import android.content.Intent
 import android.os.Bundle
-import android.provider.DocumentsContract
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -353,30 +351,11 @@ class StorageActivity : ComponentActivity() {
     }
 
     private fun launchPicker() {
-        val intent =
-            Intent(
-                Intent.ACTION_OPEN_DOCUMENT_TREE
-            ).apply {
-                addFlags(
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
-                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-                )
-
-                val current =
-                    NexaurenStorage.getTreeUri(
-                        this@StorageActivity
-                    )
-
-                if (current != null) {
-                    putExtra(
-                        DocumentsContract.EXTRA_INITIAL_URI,
-                        current
-                    )
-                }
-            }
-
-        picker.launch(intent)
+        picker.launch(
+            NexaurenStorage.getTreeUri(
+                this
+            )
+        )
     }
 
     private fun refreshLocation() {
