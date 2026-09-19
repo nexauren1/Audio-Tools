@@ -1289,12 +1289,13 @@ openToolOrUpgrade(
                                 R.color.audio_green
                         }
 
-                    planView?.setTextColor(
-                        ContextCompat.getColor(
-                            this,
+                    planView?.let {
+                        ViewKit.setPillColor(
+                            it,
+                            this@MainActivity,
                             color
                         )
-                    )
+                    }
                 }
             }
         }
