@@ -27,19 +27,33 @@ data class Entitlement(
 ) {
     fun hasAccess(
         requiredPlan: String
-    ): Boolean =
-        when (
+    ): Boolean {
+        val required =
             requiredPlan
                 .uppercase()
-        ) {
+
+        if (required == "FREE") {
+            return true
+        }
+
+        val active =
+            expiresAt == null ||
+                expiresAt >
+                System.currentTimeMillis()
+                    .div(1000L)
+
+        return when (required) {
             "PREMIUM" ->
-                plan == "PREMIUM"
+                plan == "PREMIUM" &&
+                    active
             "PRO" ->
-                plan == "PRO" ||
-                    plan == "PREMIUM"
+                (plan == "PRO" ||
+                    plan == "PREMIUM") &&
+                    active
             else ->
                 true
         }
+    }
 }
 
 data class PayPalSubscription(
