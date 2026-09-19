@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "261545373135",
+    "project_id": "audio-tools-a256e",
+    "storage_bucket": "audio-tools-a256e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:261545373135:android:dc3a7288baa5f73406b6ba",
+        "android_client_info": {
+          "package_name": "com.nexauren.audiotools"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfemtYT5XYWf2dLIhV2JmhhMFv5gv-1UE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
