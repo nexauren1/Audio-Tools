@@ -574,6 +574,11 @@ class UpgradeActivity : ComponentActivity() {
         plans: List<PlanInfo>,
         entitlement: Entitlement
     ) {
+        PlanAccessStore.save(
+            this,
+            entitlement
+        )
+
         currentPlanView?.text =
             when (
                 entitlement.plan
@@ -983,6 +988,11 @@ class UpgradeActivity : ComponentActivity() {
                         .activateSubscription(
                             subscriptionId
                         )
+
+                PlanAccessStore.save(
+                    this@UpgradeActivity,
+                    entitlement
+                )
 
                 mainHandler.post {
                     loading?.visibility =
