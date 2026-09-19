@@ -200,7 +200,23 @@ class SettingsActivity : ComponentActivity() {
             setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.audio_text))
             isChecked = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("auto_update_check", true)
             setOnCheckedChangeListener { _, enabled ->
-                getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("auto_update_check", enabled).apply()
+                getSharedPreferences(
+                    "settings",
+                    MODE_PRIVATE
+                ).edit()
+                    .putBoolean(
+                        "auto_update_check",
+                        enabled
+                    )
+                    .apply()
+
+                if (enabled) {
+                    com.nexauren.audiotools.update.UpdateScheduler
+                        .schedule(this@SettingsActivity)
+                } else {
+                    com.nexauren.audiotools.update.UpdateScheduler
+                        .cancel(this@SettingsActivity)
+                }
             }
         })
         updateCard.addView(content)
