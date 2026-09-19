@@ -308,6 +308,51 @@ object ViewKit {
             }
         }
 
+    fun setPillColor(
+        view: TextView,
+        context: Context,
+        colorRes: Int
+    ) {
+        val softRes =
+            when (colorRes) {
+                R.color.audio_green ->
+                    R.color.audio_green_soft
+                R.color.audio_red ->
+                    R.color.audio_red_soft
+                R.color.audio_yellow ->
+                    R.color.audio_yellow_soft
+                R.color.audio_purple ->
+                    R.color.audio_purple_soft
+                R.color.audio_orange ->
+                    R.color.audio_orange_soft
+                R.color.audio_teal ->
+                    R.color.audio_teal_soft
+                R.color.audio_pink ->
+                    R.color.audio_pink_soft
+                else ->
+                    R.color.audio_blue_soft
+            }
+
+        view.setTextColor(
+            ContextCompat.getColor(
+                context,
+                colorRes
+            )
+        )
+
+        view.background =
+            GradientDrawable().apply {
+                cornerRadius =
+                    dp(context, 50).toFloat()
+                setColor(
+                    ContextCompat.getColor(
+                        context,
+                        softRes
+                    )
+                )
+            }
+    }
+
     fun iconButton(
         context: Context,
         symbol: String,
