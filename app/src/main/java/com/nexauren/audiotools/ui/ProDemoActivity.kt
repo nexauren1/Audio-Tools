@@ -603,53 +603,53 @@ class ProDemoActivity : ComponentActivity() {
                 else -> "Não foi possível inspecionar este áudio."
             }
             "duration" -> when (lang) {
-                "en" -> "Duration",
-                "fr" -> "Durée",
-                "es" -> "Duración",
-                "de" -> "Dauer",
+                "en" -> "Duration"
+                "fr" -> "Durée"
+                "es" -> "Duración"
+                "de" -> "Dauer"
                 else -> "Duração"
             }
             "format" -> when (lang) {
-                "en" -> "Format",
-                "fr" -> "Format",
-                "es" -> "Formato",
-                "de" -> "Format",
+                "en" -> "Format"
+                "fr" -> "Format"
+                "es" -> "Formato"
+                "de" -> "Format"
                 else -> "Formato"
             }
             "bitrate" -> "Bitrate"
             "sandboxOnly" -> when (lang) {
-                "en" -> "Demo runs locally in the app.",
-                "fr" -> "La démo s’exécute localement dans l’app.",
-                "es" -> "La demo se ejecuta localmente en la app.",
-                "de" -> "Die Demo läuft lokal in der App.",
+                "en" -> "Demo runs locally in the app."
+                "fr" -> "La démo s’exécute localement dans l’app."
+                "es" -> "La demo se ejecuta localmente en la app."
+                "de" -> "Die Demo läuft lokal in der App."
                 else -> "A demonstração é executada localmente na app."
             }
             "sandbox" -> when (lang) {
-                "en" -> "PAYPAL SANDBOX: testing only. No production payment endpoint is used.",
-                "fr" -> "PAYPAL SANDBOX : tests uniquement. Aucun endpoint de production n’est utilisé.",
-                "es" -> "PAYPAL SANDBOX: solo pruebas. No se usa ningún endpoint de producción.",
-                "de" -> "PAYPAL SANDBOX: nur Tests. Kein Produktions-Endpoint wird verwendet.",
+                "en" -> "PAYPAL SANDBOX: testing only. No production payment endpoint is used."
+                "fr" -> "PAYPAL SANDBOX : tests uniquement. Aucun endpoint de production n’est utilisé."
+                "es" -> "PAYPAL SANDBOX: solo pruebas. No se usa ningún endpoint de producción."
+                "de" -> "PAYPAL SANDBOX: nur Tests. Kein Produktions-Endpoint wird verwendet."
                 else -> "PAYPAL SANDBOX: apenas testes. Nenhum endpoint de produção é usado."
             }
             "report" -> when (lang) {
-                "en" -> "LOCAL PRO TOOL",
-                "fr" -> "OUTIL PRO LOCAL",
-                "es" -> "HERRAMIENTA PRO LOCAL",
-                "de" -> "LOKALES PRO-TOOL",
+                "en" -> "LOCAL PRO TOOL"
+                "fr" -> "OUTIL PRO LOCAL"
+                "es" -> "HERRAMIENTA PRO LOCAL"
+                "de" -> "LOKALES PRO-TOOL"
                 else -> "FERRAMENTA PRO LOCAL"
             }
             "expiresAt" -> when (lang) {
-                "en" -> "Entitlement expiry:",
-                "fr" -> "Expiration de l’accès :",
-                "es" -> "Vencimiento del acceso:",
-                "de" -> "Zugriff läuft ab:",
+                "en" -> "Entitlement expiry:"
+                "fr" -> "Expiration de l’accès :"
+                "es" -> "Vencimiento del acceso:"
+                "de" -> "Zugriff läuft ab:"
                 else -> "Expira em:"
             }
             "activeNoExpiry" -> when (lang) {
-                "en" -> "Active without an expiry date.",
-                "fr" -> "Actif sans date d’expiration.",
-                "es" -> "Activo sin fecha de vencimiento.",
-                "de" -> "Aktiv ohne Ablaufdatum.",
+                "en" -> "Active without an expiry date."
+                "fr" -> "Actif sans date d’expiration."
+                "es" -> "Activo sin fecha de vencimiento."
+                "de" -> "Aktiv ohne Ablaufdatum."
                 else -> "Ativo sem data de expiração."
             }
             else -> key
