@@ -71,7 +71,7 @@ object ViewKit {
         MaterialCardView(context).apply {
             radius = dp(context, 22).toFloat()
             cardElevation = dp(context, if (clickable) 2 else 1).toFloat()
-            strokeWidth = dp(context, if (accentColorRes != null) 1.5f else 1f)
+            strokeWidth = dp(context, if (accentColorRes != null) 1.5f else 1f).toInt()
             strokeColor = ContextCompat.getColor(
                 context,
                 accentColorRes ?: R.color.audio_border
