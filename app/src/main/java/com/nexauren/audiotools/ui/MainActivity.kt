@@ -69,7 +69,7 @@ class MainActivity : ComponentActivity() {
         row.addView(ViewKit.spacer(this, 1).apply {
             layoutParams = LinearLayout.LayoutParams(0, 1, 1f)
         })
-        row.addView(ViewKit.pill(this, ViewKit.shortVersion(BuildConfig.VERSION_NAME), colorRes = R.color.audio_green))
+        row.addView(ViewKit.pill(this, BuildConfig.VERSION_NAME, colorRes = R.color.audio_green))
         heroContent.addView(row)
         heroContent.addView(ViewKit.spacer(this, 12))
         heroContent.addView(ViewKit.title(this, "O teu áudio,\nno teu controlo.", 27f))
@@ -385,6 +385,4 @@ class MainActivity : ComponentActivity() {
             }
             .show()
     }
-
-    private fun ViewKit.shortVersion(version: String): String = version
-}
+\n}
