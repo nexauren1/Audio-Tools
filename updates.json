@@ -1,6 +1,11 @@
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "tools": [
+    {
+      "id": "v0.11.0-ui",
+      "title": "Nova navegação e Home",
+      "description": "Home em grelha 3x2, menu no topo e páginas organizadas."
+    },
     "favorites",
     "history",
     "profile",
