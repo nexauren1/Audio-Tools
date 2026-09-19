@@ -1,11 +1,11 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "tools": [],
   "news": [
     {
-      "id": "v0.4.0-audio-workspace",
-      "title": "Audio Tools 0.4.0",
-      "description": "Cortador com timeline arrastável, conversor WAV/M4A, grelha compacta, cinco idiomas e atualizações pelo instalador do Android."
+      "id": "v0.5.0-preview-workflow",
+      "title": "Pré-visualização antes de guardar",
+      "description": "Corte, conversão, extração e gravação agora permitem ouvir o resultado antes de o guardar no dispositivo."
     }
   ]
 }
