@@ -1,6 +1,5 @@
 package com.nexauren.audiotools.ui
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
@@ -13,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -31,7 +31,7 @@ import com.nexauren.audiotools.update.UpdateScheduler
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
-    private lateinit var toolGrid: LinearLayout
+    private lateinit var toolGrid: GridLayout
     private var searchInput: EditText? = null
     private var planView: TextView? = null
 
@@ -82,16 +82,22 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun buildUi() {
-        val root = ViewKit.page(this)
+        val root =
+            ViewKit.page(this)
 
         root.addView(topBar())
-        root.addView(ViewKit.spacer(this, 12))
+        root.addView(
+            ViewKit.spacer(this, 14)
+        )
 
-        val hero = ViewKit.hero(this)
+        val hero =
+            ViewKit.hero(this)
 
-        val heroContent =
+        val heroBody =
             LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
+                orientation =
+                    LinearLayout.VERTICAL
+
                 setPadding(
                     ViewKit.dp(this@MainActivity, 18),
                     ViewKit.dp(this@MainActivity, 18),
@@ -102,22 +108,29 @@ class MainActivity : ComponentActivity() {
 
         val heroTop =
             LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
+                orientation =
+                    LinearLayout.HORIZONTAL
+                gravity =
+                    Gravity.CENTER_VERTICAL
             }
 
         heroTop.addView(
             ViewKit.pill(
                 this,
-                "AUDIO WORKSPACE",
-                colorRes = R.color.audio_blue
+                "NEXAUREN AUDIO",
+                colorRes =
+                    R.color.audio_teal
             )
         )
 
         heroTop.addView(
             ViewKit.spacer(this, 1).apply {
                 layoutParams =
-                    LinearLayout.LayoutParams(0, 1, 1f)
+                    LinearLayout.LayoutParams(
+                        0,
+                        1,
+                        1f
+                    )
             }
         )
 
@@ -125,13 +138,16 @@ class MainActivity : ComponentActivity() {
             ViewKit.pill(
                 this,
                 "FREE",
-                colorRes = R.color.audio_green
+                colorRes =
+                    R.color.audio_green
             )
 
         heroTop.addView(planView)
-        heroContent.addView(heroTop)
+        heroBody.addView(heroTop)
 
-        heroContent.addView(ViewKit.spacer(this, 13))
+        heroBody.addView(
+            ViewKit.spacer(this, 14)
+        )
 
         val firstName =
             FirebaseAuth
@@ -143,59 +159,52 @@ class MainActivity : ComponentActivity() {
                 ?.firstOrNull()
                 ?.takeIf { it.isNotBlank() }
 
-        heroContent.addView(
-            ViewKit.title(
+        heroBody.addView(
+            ViewKit.eyebrow(
                 this,
                 if (firstName != null) {
-                    "Olá, " + firstName + "."
+                    "OLÁ, " +
+                        firstName.uppercase()
                 } else {
-                    "Olá."
-                },
-                18f
+                    "AUDIO WORKSPACE"
+                }
             )
         )
 
-        heroContent.addView(ViewKit.spacer(this, 3))
+        heroBody.addView(
+            ViewKit.spacer(this, 4)
+        )
 
-        heroContent.addView(
+        heroBody.addView(
             ViewKit.title(
                 this,
-                "O teu áudio,\nno teu controlo.",
+                "Cria. Edita.\nOuve melhor.",
                 30f
             )
         )
 
-        heroContent.addView(ViewKit.spacer(this, 7))
+        heroBody.addView(
+            ViewKit.spacer(this, 6)
+        )
 
-        heroContent.addView(
+        heroBody.addView(
             ViewKit.subtitle(
                 this,
-                "Uma área simples para editar, converter, extrair, gravar e analisar áudio."
+                "Seis ferramentas para trabalhar áudio sem complicar."
             )
         )
 
-        heroContent.addView(ViewKit.spacer(this, 14))
+        heroBody.addView(
+            ViewKit.spacer(this, 13)
+        )
 
-        val quick =
-            LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-            }
-
-        quick.addView(
+        heroBody.addView(
             ViewKit.button(
                 this,
-                "⚡ Abrir ferramentas",
+                "Abrir Tools",
                 true,
-                R.color.audio_blue
+                R.color.audio_teal
             ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
-
                 setOnClickListener {
                     AppPagesActivity.open(
                         this@MainActivity,
@@ -205,50 +214,24 @@ class MainActivity : ComponentActivity() {
             }
         )
 
-        quick.addView(
-            ViewKit.iconButton(
-                this,
-                "⌕",
-                "Pesquisar ferramentas"
-            ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewKit.dp(this@MainActivity, 52),
-                        ViewKit.dp(this@MainActivity, 52)
-                    ).apply {
-                        leftMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                8
-                            )
-                    }
-
-                setOnClickListener {
-                    searchInput?.requestFocus()
-
-                    (
-                        getSystemService(
-                            Context.INPUT_METHOD_SERVICE
-                        ) as? InputMethodManager
-                    )?.showSoftInput(
-                        searchInput,
-                        InputMethodManager.SHOW_IMPLICIT
-                    )
-                }
-            }
-        )
-
-        heroContent.addView(quick)
-        hero.addView(heroContent)
+        hero.addView(heroBody)
         root.addView(hero)
 
-        root.addView(ViewKit.spacer(this, 18))
-        root.addView(sectionHeader("Ferramentas"))
-        root.addView(ViewKit.spacer(this, 8))
+        root.addView(
+            ViewKit.spacer(this, 18)
+        )
+
+        val searchRow =
+            LinearLayout(this).apply {
+                orientation =
+                    LinearLayout.HORIZONTAL
+                gravity =
+                    Gravity.CENTER_VERTICAL
+            }
 
         searchInput =
             EditText(this).apply {
-                hint = "Pesquisar ferramenta…"
+                hint = "Pesquisar uma ferramenta"
                 isSingleLine = true
                 textSize = 14f
                 minHeight =
@@ -334,45 +317,247 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-        root.addView(searchInput)
-        root.addView(ViewKit.spacer(this, 12))
+        searchRow.addView(
+            searchInput,
+            LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        )
 
-        toolGrid =
+        searchRow.addView(
+            ViewKit.iconButton(
+                this,
+                "⌕",
+                "Focar pesquisa"
+            ).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewKit.dp(
+                            this@MainActivity,
+                            52
+                        ),
+                        ViewKit.dp(
+                            this@MainActivity,
+                            52
+                        )
+                    ).apply {
+                        leftMargin =
+                            ViewKit.dp(
+                                this@MainActivity,
+                                8
+                            )
+                    }
+
+                setOnClickListener {
+                    searchInput?.requestFocus()
+
+                    (
+                        getSystemService(
+                            Context.INPUT_METHOD_SERVICE
+                        ) as? InputMethodManager
+                    )?.showSoftInput(
+                        searchInput,
+                        InputMethodManager.SHOW_IMPLICIT
+                    )
+                }
+            }
+        )
+
+        root.addView(searchRow)
+
+        root.addView(
+            ViewKit.spacer(this, 14)
+        )
+
+        root.addView(
             LinearLayout(this).apply {
                 orientation =
-                    LinearLayout.VERTICAL
+                    LinearLayout.HORIZONTAL
+                gravity =
+                    Gravity.CENTER_VERTICAL
+
+                addView(
+                    ViewKit.title(
+                        this@MainActivity,
+                        "Ferramentas",
+                        21f
+                    ).apply {
+                        layoutParams =
+                            LinearLayout.LayoutParams(
+                                0,
+                                ViewGroup.LayoutParams
+                                    .WRAP_CONTENT,
+                                1f
+                            )
+                    }
+                )
+
+                addView(
+                    ViewKit.subtitle(
+                        this@MainActivity,
+                        "6"
+                    )
+                )
+            }
+        )
+
+        root.addView(
+            ViewKit.spacer(this, 9)
+        )
+
+        toolGrid =
+            GridLayout(this).apply {
+                columnCount = 3
+                useDefaultMargins = false
+                alignmentMode =
+                    GridLayout.ALIGN_BOUNDS
             }
 
         root.addView(toolGrid)
 
-        root.addView(ViewKit.spacer(this, 16))
-        root.addView(sectionHeader("Recentes"))
-        root.addView(ViewKit.spacer(this, 8))
-        root.addView(recentSection())
+        root.addView(
+            ViewKit.spacer(this, 16)
+        )
 
-        root.addView(ViewKit.spacer(this, 16))
-        root.addView(sectionHeader("Favoritos"))
-        root.addView(ViewKit.spacer(this, 8))
-        root.addView(favoriteSection())
+        root.addView(
+            ViewKit.card(
+                this,
+                clickable = true,
+                accentColorRes =
+                    R.color.audio_purple
+            ).apply {
+                addView(
+                    LinearLayout(
+                        this@MainActivity
+                    ).apply {
+                        orientation =
+                            LinearLayout.HORIZONTAL
+                        gravity =
+                            Gravity.CENTER_VERTICAL
 
-        root.addView(ViewKit.spacer(this, 16))
-        root.addView(proStatusCard())
+                        setPadding(
+                            ViewKit.dp(
+                                this@MainActivity,
+                                14
+                            ),
+                            ViewKit.dp(
+                                this@MainActivity,
+                                13
+                            ),
+                            ViewKit.dp(
+                                this@MainActivity,
+                                14
+                            ),
+                            ViewKit.dp(
+                                this@MainActivity,
+                                13
+                            )
+                        )
 
-        root.addView(ViewKit.spacer(this, 12))
-        root.addView(localCard())
+                        addView(
+                            ViewKit.iconBadge(
+                                this@MainActivity,
+                                "☷",
+                                R.color.audio_purple
+                            ).apply {
+                                layoutParams =
+                                    LinearLayout.LayoutParams(
+                                        ViewKit.dp(
+                                            this@MainActivity,
+                                            44
+                                        ),
+                                        ViewKit.dp(
+                                            this@MainActivity,
+                                            44
+                                        )
+                                    ).apply {
+                                        rightMargin =
+                                            ViewKit.dp(
+                                                this@MainActivity,
+                                                10
+                                            )
+                                    }
+                            }
+                        )
 
-        root.addView(ViewKit.spacer(this, 20))
-        root.addView(ViewKit.bottomNav(this, "home"))
+                        addView(
+                            LinearLayout(
+                                this@MainActivity
+                            ).apply {
+                                orientation =
+                                    LinearLayout.VERTICAL
+                                layoutParams =
+                                    LinearLayout.LayoutParams(
+                                        0,
+                                        ViewGroup.LayoutParams
+                                            .WRAP_CONTENT,
+                                        1f
+                                    )
 
-        root.addView(ViewKit.spacer(this, 12))
+                                addView(
+                                    ViewKit.title(
+                                        this@MainActivity,
+                                        "Mais controlo",
+                                        15f
+                                    )
+                                )
+
+                                addView(
+                                    ViewKit.spacer(
+                                        this@MainActivity,
+                                        3
+                                    )
+                                )
+
+                                addView(
+                                    ViewKit.subtitle(
+                                        this@MainActivity,
+                                        "Favoritos, histórico, estatísticas, suporte e o teu perfil ficam no Menu."
+                                    )
+                                )
+                            }
+                        )
+
+                        addView(
+                            TextView(
+                                this@MainActivity
+                            ).apply {
+                                text = "›"
+                                textSize = 25f
+                                setTextColor(
+                                    ContextCompat.getColor(
+                                        this@MainActivity,
+                                        R.color.audio_purple
+                                    )
+                                )
+                            }
+                        )
+                    }
+                )
+
+                setOnClickListener {
+                    AppPagesActivity.open(
+                        this@MainActivity,
+                        AppPagesActivity.PAGE_MENU
+                    )
+                }
+            }
+        )
+
+        root.addView(
+            ViewKit.spacer(this, 10)
+        )
+
         root.addView(
             TextView(this).apply {
                 text =
-                    "Audio Tools  •  " +
+                    "Audio Tools  •  v" +
                         BuildConfig.VERSION_NAME
                 textSize = 10.5f
                 gravity = Gravity.CENTER
-                letterSpacing = 0.1f
+                letterSpacing = 0.08f
                 setTextColor(
                     ContextCompat.getColor(
                         this@MainActivity,
@@ -395,64 +580,13 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun topBar(): ViewGroup {
-        val user =
-            FirebaseAuth
-                .getInstance()
-                .currentUser
-
-        val displayName =
-            user
-                ?.displayName
-                ?.trim()
-                .orEmpty()
-
-        val initials =
-            displayName
-                .split(Regex("\\s+"))
-                .filter { it.isNotBlank() }
-                .take(2)
-                .joinToString("") {
-                    it.take(1).uppercase()
-                }
-                .ifBlank { "AT" }
-
-        val header =
+        val row =
             LinearLayout(this).apply {
                 orientation =
                     LinearLayout.HORIZONTAL
                 gravity =
                     Gravity.CENTER_VERTICAL
             }
-
-        header.addView(
-            ViewKit.iconBadge(
-                this,
-                initials,
-                R.color.audio_blue
-            ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewKit.dp(this@MainActivity, 46),
-                        ViewKit.dp(this@MainActivity, 46)
-                    ).apply {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                10
-                            )
-                    }
-
-                contentDescription =
-                    "Abrir perfil"
-
-                setOnClickListener {
-                    AppPagesActivity.open(
-                        this@MainActivity,
-                        AppPagesActivity.PAGE_PROFILE
-                    )
-                }
-            }
-        )
 
         val brand =
             LinearLayout(this).apply {
@@ -461,7 +595,8 @@ class MainActivity : ComponentActivity() {
                 layoutParams =
                     LinearLayout.LayoutParams(
                         0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams
+                            .WRAP_CONTENT,
                         1f
                     )
             }
@@ -477,18 +612,30 @@ class MainActivity : ComponentActivity() {
             ViewKit.title(
                 this,
                 "AUDIO TOOLS",
-                17f
+                19f
             )
         )
 
-        header.addView(brand)
+        row.addView(brand)
 
-        header.addView(
+        row.addView(
             ViewKit.iconButton(
                 this,
                 "☰",
-                "Menu completo"
+                "Abrir menu"
             ).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewKit.dp(
+                            this@MainActivity,
+                            52
+                        ),
+                        ViewKit.dp(
+                            this@MainActivity,
+                            52
+                        )
+                    )
+
                 setOnClickListener {
                     AppPagesActivity.open(
                         this@MainActivity,
@@ -498,54 +645,8 @@ class MainActivity : ComponentActivity() {
             }
         )
 
-        header.addView(
-            ViewKit.spacer(this, 4)
-        )
-
-        header.addView(
-            ViewKit.iconButton(
-                this,
-                "⚙",
-                "Definições"
-            ).apply {
-                setOnClickListener {
-                    startActivity(
-                        Intent(
-                            this@MainActivity,
-                            SettingsActivity::class.java
-                        )
-                    )
-                }
-            }
-        )
-
-        return header
+        return row
     }
-
-    private fun sectionHeader(
-        title: String
-    ): ViewGroup =
-        LinearLayout(this).apply {
-            orientation =
-                LinearLayout.HORIZONTAL
-            gravity =
-                Gravity.CENTER_VERTICAL
-
-            addView(
-                ViewKit.title(
-                    this@MainActivity,
-                    title,
-                    20f
-                ).apply {
-                    layoutParams =
-                        LinearLayout.LayoutParams(
-                            0,
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            1f
-                        )
-                }
-            )
-        }
 
     private fun renderTools(
         query: String = ""
@@ -580,21 +681,131 @@ class MainActivity : ComponentActivity() {
             }
 
         if (filtered.isEmpty()) {
-            toolGrid.addView(
-                emptyCard(
-                    "Não encontrámos nenhuma ferramenta com essa pesquisa."
+            val empty =
+                ViewKit.card(
+                    this,
+                    accentColorRes =
+                        R.color.audio_border
                 )
+
+            empty.addView(
+                LinearLayout(this).apply {
+                    orientation =
+                        LinearLayout.VERTICAL
+                    gravity =
+                        Gravity.CENTER_HORIZONTAL
+                    setPadding(
+                        ViewKit.dp(
+                            this@MainActivity,
+                            18
+                        ),
+                        ViewKit.dp(
+                            this@MainActivity,
+                            18
+                        ),
+                        ViewKit.dp(
+                            this@MainActivity,
+                            18
+                        ),
+                        ViewKit.dp(
+                            this@MainActivity,
+                            18
+                        )
+                    )
+                    addView(
+                        ViewKit.title(
+                            this@MainActivity,
+                            "Sem resultados",
+                            17f
+                        )
+                    )
+                    addView(
+                        ViewKit.spacer(
+                            this@MainActivity,
+                            4
+                        )
+                    )
+                    addView(
+                        ViewKit.subtitle(
+                            this@MainActivity,
+                            "Experimenta outro nome de ferramenta."
+                        )
+                    )
+                }
+            )
+
+            val params =
+                GridLayout.LayoutParams(
+                    GridLayout.spec(
+                        0,
+                        3
+                    ),
+                    GridLayout.spec(
+                        0,
+                        3
+                    )
+                )
+
+            params.width = GridLayout.LayoutParams.MATCH_PARENT
+
+            toolGrid.addView(
+                empty,
+                params
             )
             return
         }
 
-        filtered.forEach { tool ->
-            toolGrid.addView(
+        filtered.forEachIndexed {
+            index,
+            tool ->
+            val card =
                 toolCard(tool)
-            )
+
+            val column =
+                index % 3
+
+            val row =
+                index / 3
+
+            val params =
+                GridLayout.LayoutParams(
+                    GridLayout.spec(
+                        row,
+                        1,
+                        GridLayout.FILL,
+                        1f
+                    ),
+                    GridLayout.spec(
+                        column,
+                        1,
+                        GridLayout.FILL,
+                        1f
+                    )
+                ).apply {
+                    width = 0
+                    height =
+                        ViewKit.dp(
+                            this@MainActivity,
+                            190
+                        )
+
+                    val gap =
+                        ViewKit.dp(
+                            this@MainActivity,
+                            5
+                        )
+
+                    setMargins(
+                        if (column == 0) 0 else gap,
+                        if (row == 0) 0 else gap,
+                        if (column == 2) 0 else gap,
+                        gap
+                    )
+                }
 
             toolGrid.addView(
-                ViewKit.spacer(this, 9)
+                card,
+                params
             )
         }
     }
@@ -624,28 +835,16 @@ class MainActivity : ComponentActivity() {
                 accentColorRes = accent
             )
 
-        val content =
+        val body =
             LinearLayout(this).apply {
                 orientation =
                     LinearLayout.VERTICAL
 
                 setPadding(
-                    ViewKit.dp(
-                        this@MainActivity,
-                        14
-                    ),
-                    ViewKit.dp(
-                        this@MainActivity,
-                        14
-                    ),
-                    ViewKit.dp(
-                        this@MainActivity,
-                        14
-                    ),
-                    ViewKit.dp(
-                        this@MainActivity,
-                        14
-                    )
+                    ViewKit.dp(this@MainActivity, 10),
+                    ViewKit.dp(this@MainActivity, 10),
+                    ViewKit.dp(this@MainActivity, 10),
+                    ViewKit.dp(this@MainActivity, 10)
                 )
             }
 
@@ -667,78 +866,36 @@ class MainActivity : ComponentActivity() {
                     LinearLayout.LayoutParams(
                         ViewKit.dp(
                             this@MainActivity,
-                            48
+                            42
                         ),
                         ViewKit.dp(
                             this@MainActivity,
-                            48
+                            42
                         )
-                    ).apply {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                11
-                            )
-                    }
-
-                contentDescription =
-                    copy.title
+                    )
             }
         )
 
-        val text =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.VERTICAL
+        top.addView(
+            ViewKit.spacer(this, 1).apply {
                 layoutParams =
                     LinearLayout.LayoutParams(
                         0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1,
                         1f
                     )
             }
-
-        text.addView(
-            TextView(this).apply {
-                this.text = copy.title
-                textSize = 16f
-                setTypeface(
-                    typeface,
-                    android.graphics.Typeface.BOLD
-                )
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_text
-                    )
-                )
-            }
         )
-
-        text.addView(ViewKit.spacer(this, 3))
-
-        text.addView(
-            TextView(this).apply {
-                this.text = copy.description
-                textSize = 11.5f
-                maxLines = 2
-                setLineSpacing(1.05f, 1f)
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_muted
-                    )
-                )
-            }
-        )
-
-        top.addView(text)
 
         top.addView(
             ViewKit.iconButton(
                 this,
                 if (favorite) "★" else "☆",
-                "Alternar favorito"
+                if (favorite) {
+                    "Remover dos favoritos"
+                } else {
+                    "Adicionar aos favoritos"
+                }
             ).apply {
                 layoutParams =
                     LinearLayout.LayoutParams(
@@ -757,7 +914,6 @@ class MainActivity : ComponentActivity() {
                         this@MainActivity,
                         tool.id
                     )
-
                     renderTools(
                         searchInput
                             ?.text
@@ -768,37 +924,58 @@ class MainActivity : ComponentActivity() {
             }
         )
 
-        content.addView(top)
-        content.addView(ViewKit.spacer(this, 10))
-
-        val meta =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-                gravity =
-                    Gravity.CENTER_VERTICAL
-            }
-
-        meta.addView(
-            ViewKit.pill(
-                this,
-                "ÁUDIO",
-                colorRes = accent
-            )
+        body.addView(top)
+        body.addView(
+            ViewKit.spacer(this, 8)
         )
 
-        meta.addView(
-            ViewKit.spacer(this, 1).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        1,
-                        1f
+        body.addView(
+            TextView(this).apply {
+                text =
+                    copy.title
+                textSize = 14f
+                maxLines = 2
+                setTypeface(
+                    typeface,
+                    android.graphics.Typeface.BOLD
+                )
+                setTextColor(
+                    ContextCompat.getColor(
+                        this@MainActivity,
+                        R.color.audio_text
                     )
+                )
             }
         )
 
-        meta.addView(
+        body.addView(
+            ViewKit.spacer(this, 3)
+        )
+
+        body.addView(
+            TextView(this).apply {
+                text =
+                    copy.description
+                textSize = 10.5f
+                maxLines = 2
+                setLineSpacing(
+                    1.04f,
+                    1f
+                )
+                setTextColor(
+                    ContextCompat.getColor(
+                        this@MainActivity,
+                        R.color.audio_muted
+                    )
+                )
+            }
+        )
+
+        body.addView(
+            ViewKit.spacer(this, 6)
+        )
+
+        body.addView(
             ViewKit.pill(
                 this,
                 if (
@@ -814,150 +991,11 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-        content.addView(meta)
-        card.addView(content)
+        body.addView(
+            ViewKit.spacer(this, 6)
+        )
 
-        card.setOnClickListener {
-            openToolOrUpgrade(tool, card)
-        }
-
-        return card
-    }
-
-    private fun recentSection(): View {
-        val ids =
-            UsageStore
-                .history(this)
-                .map { it.toolId }
-                .distinct()
-                .take(3)
-
-        if (ids.isEmpty()) {
-            return emptyCard(
-                "As ferramentas que usares vão aparecer aqui."
-            )
-        }
-
-        val row =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-            }
-
-        ids.mapNotNull {
-            ToolCatalog.get(it)
-        }.forEachIndexed { index, tool ->
-            row.addView(
-                ViewKit.quickChip(
-                    this,
-                    toolSymbol(tool.id),
-                    AppStrings
-                        .tool(this, tool.id)
-                        .title,
-                    toolAccent(tool.id)
-                ) {
-openToolOrUpgrade(
-                        tool,
-                        row
-                    )
-                },
-                LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-                ).apply {
-                    if (index < ids.lastIndex) {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                7
-                            )
-                    }
-                }
-            )
-        }
-
-        return row
-    }
-
-    private fun favoriteSection(): View {
-        val ids =
-            UsageStore
-                .favorites(this)
-                .toList()
-                .take(3)
-
-        if (ids.isEmpty()) {
-            return emptyCard(
-                "Marca uma ferramenta com ☆ para a encontrares rapidamente."
-            )
-        }
-
-        val row =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-            }
-
-        ids.mapNotNull {
-            ToolCatalog.get(it)
-        }.forEachIndexed { index, tool ->
-            row.addView(
-                ViewKit.quickChip(
-                    this,
-                    toolSymbol(tool.id),
-                    AppStrings
-                        .tool(this, tool.id)
-                        .title,
-                    toolAccent(tool.id)
-                ) {
-openToolOrUpgrade(
-                        tool,
-                        row
-                    )
-                },
-                LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-                ).apply {
-                    if (index < ids.lastIndex) {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                7
-                            )
-                    }
-                }
-            )
-        }
-
-        return row
-    }
-
-    private fun proStatusCard():
-        MaterialCardView {
-        val card =
-            ViewKit.card(
-                this,
-                clickable = true,
-                accentColorRes =
-                    R.color.audio_purple
-            )
-
-        val content =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.VERTICAL
-                setPadding(
-                    ViewKit.dp(this@MainActivity, 15),
-                    ViewKit.dp(this@MainActivity, 15),
-                    ViewKit.dp(this@MainActivity, 15),
-                    ViewKit.dp(this@MainActivity, 15)
-                )
-            }
-
-        val row =
+        val actions =
             LinearLayout(this).apply {
                 orientation =
                     LinearLayout.HORIZONTAL
@@ -965,247 +1003,112 @@ openToolOrUpgrade(
                     Gravity.CENTER_VERTICAL
             }
 
-        row.addView(
-            ViewKit.iconBadge(
+        actions.addView(
+            ViewKit.iconButton(
                 this,
-                "PRO",
-                R.color.audio_purple
-            ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewKit.dp(this@MainActivity, 50),
-                        ViewKit.dp(this@MainActivity, 50)
-                    ).apply {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                11
-                            )
-                    }
-            }
-        )
-
-        val copy =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.VERTICAL
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
-            }
-
-        copy.addView(
-            ViewKit.eyebrow(
-                this,
-                "ACESSO"
-            )
-        )
-
-        copy.addView(
-            TextView(this).apply {
-                text =
-                    "Plano e ferramentas desbloqueadas"
-                textSize = 14.5f
-                setTypeface(
-                    typeface,
-                    android.graphics.Typeface.BOLD
-                )
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_text
-                    )
-                )
-            }
-        )
-
-        copy.addView(
-            TextView(this).apply {
-                text =
-                    "Consulta o estado da tua assinatura e os planos disponíveis."
-                textSize = 11.5f
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_muted
-                    )
-                )
-            }
-        )
-
-        row.addView(copy)
-        content.addView(row)
-        content.addView(ViewKit.spacer(this, 10))
-
-        content.addView(
-            ViewKit.button(
-                this,
-                "Ver planos",
-                false,
-                R.color.audio_purple
+                "↗",
+                "Partilhar ferramenta"
             ).apply {
                 setOnClickListener {
-                    startActivity(
-                        Intent(
-                            this@MainActivity,
-                            UpgradeActivity::class.java
-                        )
-                    )
+                    shareTool(tool)
                 }
             }
         )
 
-        card.addView(content)
-
-        card.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
-                    UpgradeActivity::class.java
-                )
-            )
-        }
-
-        return card
-    }
-
-    private fun localCard():
-        MaterialCardView {
-        val card =
-            ViewKit.card(
-                this,
-                accentColorRes =
-                    R.color.audio_green
-            )
-
-        val row =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.HORIZONTAL
-                gravity =
-                    Gravity.CENTER_VERTICAL
-                setPadding(
-                    ViewKit.dp(this@MainActivity, 14),
-                    ViewKit.dp(this@MainActivity, 12),
-                    ViewKit.dp(this@MainActivity, 14),
-                    ViewKit.dp(this@MainActivity, 12)
-                )
-            }
-
-        row.addView(
-            ViewKit.iconBadge(
-                this,
-                "✓",
-                R.color.audio_green
-            ).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewKit.dp(this@MainActivity, 42),
-                        ViewKit.dp(this@MainActivity, 42)
-                    ).apply {
-                        rightMargin =
-                            ViewKit.dp(
-                                this@MainActivity,
-                                10
-                            )
-                    }
-            }
-        )
-
-        val copy =
-            LinearLayout(this).apply {
-                orientation =
-                    LinearLayout.VERTICAL
+        actions.addView(
+            ViewKit.spacer(this, 1).apply {
                 layoutParams =
                     LinearLayout.LayoutParams(
                         0,
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1,
                         1f
                     )
             }
+        )
 
-        copy.addView(
-            TextView(this).apply {
-                text = "Processamento local"
-                textSize = 13.5f
-                setTypeface(
-                    typeface,
-                    android.graphics.Typeface.BOLD
-                )
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_text
+        actions.addView(
+            ViewKit.iconButton(
+                this,
+                "›",
+                if (
+                    tool.requiredPlan ==
+                        "FREE"
+                ) {
+                    "Abrir"
+                } else {
+                    "Ver acesso"
+                }
+            ).apply {
+                setOnClickListener {
+                    openToolOrUpgrade(
+                        tool,
+                        card
                     )
-                )
+                }
             }
         )
 
-        copy.addView(
-            TextView(this).apply {
-                text =
-                    "As ferramentas locais trabalham no próprio dispositivo sempre que possível."
-                textSize = 11f
-                setTextColor(
-                    ContextCompat.getColor(
-                        this@MainActivity,
-                        R.color.audio_muted
-                    )
-                )
-            }
-        )
+        body.addView(actions)
+        card.addView(body)
 
-        row.addView(copy)
-        card.addView(row)
+        card.setOnClickListener {
+            openToolOrUpgrade(
+                tool,
+                card
+            )
+        }
 
         return card
     }
 
-    private fun emptyCard(
-        message: String
-    ): MaterialCardView =
-        ViewKit.card(this).apply {
-            addView(
-                TextView(this@MainActivity).apply {
-                    text = message
-                    textSize = 12.5f
-                    setLineSpacing(1.1f, 1f)
-                    setTextColor(
-                        ContextCompat.getColor(
-                            this@MainActivity,
-                            R.color.audio_muted
-                        )
+    private fun shareTool(
+        tool: AudioTool
+    ) {
+        val copy =
+            AppStrings.tool(
+                this,
+                tool.id
+            )
+
+        runCatching {
+            startActivity(
+                Intent(
+                    Intent.ACTION_SEND
+                ).apply {
+                    type =
+                        "text/plain"
+
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        copy.title +
+                            "\n\n" +
+                            copy.description +
+                            "\n\nNexauren Audio Tools"
                     )
-                    setPadding(
-                        ViewKit.dp(
-                            this@MainActivity,
-                            16
-                        ),
-                        ViewKit.dp(
-                            this@MainActivity,
-                            16
-                        ),
-                        ViewKit.dp(
-                            this@MainActivity,
-                            16
-                        ),
-                        ViewKit.dp(
-                            this@MainActivity,
-                            16
-                        )
+
+                    putExtra(
+                        Intent.EXTRA_SUBJECT,
+                        copy.title
                     )
                 }
             )
+        }.onFailure {
+            Toast.makeText(
+                this,
+                "Não foi possível abrir a partilha.",
+                Toast.LENGTH_SHORT
+            ).show()
         }
+    }
 
     private fun openToolOrUpgrade(
         tool: AudioTool,
         source: View
     ) {
-        if (tool.requiredPlan == "FREE") {
+        if (
+            tool.requiredPlan ==
+                "FREE"
+        ) {
             openTool(tool)
             return
         }
@@ -1241,7 +1144,7 @@ openToolOrUpgrade(
 
                     Toast.makeText(
                         this@MainActivity,
-                        "Não foi possível confirmar o teu acesso agora.",
+                        "Não foi possível confirmar o acesso agora. Tenta novamente.",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -1252,9 +1155,14 @@ openToolOrUpgrade(
     private fun openTool(
         tool: AudioTool
     ) {
-        if (tool.id == "pro-inspector") {
+        if (
+            tool.id ==
+                "pro-inspector"
+        ) {
             startActivity(
-                ProDemoActivity.intent(this)
+                ProDemoActivity.intent(
+                    this
+                )
             )
         } else {
             startActivity(
@@ -1269,15 +1177,11 @@ openToolOrUpgrade(
     private fun refreshPlan() {
         executor.execute {
             runCatching {
-                PaymentClient
-                    .getEntitlement()
+                PaymentClient.getEntitlement()
             }.onSuccess { entitlement ->
                 handler.post {
                     val plan =
                         entitlement.plan
-
-                    planView?.text =
-                        plan
 
                     val color =
                         when (plan) {
@@ -1290,6 +1194,9 @@ openToolOrUpgrade(
                         }
 
                     planView?.let {
+                        it.text =
+                            plan
+
                         ViewKit.setPillColor(
                             it,
                             this@MainActivity,
@@ -1341,14 +1248,20 @@ openToolOrUpgrade(
         id: String
     ): Int =
         when (id) {
-            "cut" -> R.color.audio_blue
-            "convert" -> R.color.audio_purple
-            "extract" -> R.color.audio_green
-            "recorder" -> R.color.audio_red
-            "analyzer" -> R.color.audio_yellow
-            "pro-inspector" ->
+            "cut" ->
+                R.color.audio_blue
+            "convert" ->
                 R.color.audio_purple
-            else -> R.color.audio_blue
+            "extract" ->
+                R.color.audio_green
+            "recorder" ->
+                R.color.audio_red
+            "analyzer" ->
+                R.color.audio_yellow
+            "pro-inspector" ->
+                R.color.audio_teal
+            else ->
+                R.color.audio_blue
         }
 
     private fun toolSymbol(
@@ -1360,7 +1273,7 @@ openToolOrUpgrade(
             "extract" -> "↥"
             "recorder" -> "●"
             "analyzer" -> "⌁"
-            "pro-inspector" -> "★"
+            "pro-inspector" -> "◈"
             else -> "•"
         }
 }
