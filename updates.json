@@ -1,11 +1,31 @@
 {
-  "version": "0.9.0",
-  "tools": ["pro-inspector"],
+  "version": "0.10.0",
+  "tools": [
+    "favorites",
+    "history",
+    "profile",
+    "support"
+  ],
   "news": [
     {
-      "id": "v0.9.0-plans",
-      "title": "Planos Free, Pro e Premium",
-      "description": "Remove créditos e compras únicas. Adiciona assinaturas mensais, bloqueio de ferramentas e uma página de upgrade com os detalhes de cada plano."
+      "id": "v0.10.0-ui",
+      "title": "Nova experiência Audio Tools",
+      "description": "Home renovada, menu completo, navegação mais clara, favoritos, histórico e estatísticas."
+    },
+    {
+      "id": "v0.10.0-profile",
+      "title": "Novo espaço Me",
+      "description": "Perfil com foto, nome, dados da conta e informação de identidade Firebase."
+    },
+    {
+      "id": "v0.10.0-support",
+      "title": "Centro de suporte",
+      "description": "Formulário preparado para suporte, reclamações e sugestões."
+    },
+    {
+      "id": "v0.10.0-sharing",
+      "title": "Partilha de resultados",
+      "description": "Os resultados de áudio podem ser partilhados a partir das telas das ferramentas quando existe um ficheiro gerado."
     }
   ]
 }
