@@ -20,7 +20,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.nexauren.audiotools.R
-import com.nexauren.audiotools.payments.PaymentClient
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -80,19 +79,7 @@ class ProDemoActivity : ComponentActivity() {
         }
 
         buildUi()
-        refreshEntitlement()
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (
-            FirebaseAuth
-                .getInstance()
-                .currentUser != null
-        ) {
-            refreshEntitlement()
-        }
+        prepareAccess()
     }
 
     override fun onDestroy() {
@@ -455,46 +442,19 @@ class ProDemoActivity : ComponentActivity() {
         )
     }
 
-    private fun refreshEntitlement() {
-        action?.isEnabled = false
+    private fun prepareAccess() {
+        val entitlement =
+            PlanAccessStore.current(this)
 
-        executor.execute {
-            try {
-                val entitlement =
-                    PaymentClient
-                        .getEntitlement()
-
-                mainHandler.post {
-                    if (
-                        entitlement.hasAccess(
-                            "PRO"
-                        )
-                    ) {
-                        status?.text =
-                            "Pro ativo." +
-                            expiryText(
-                                entitlement
-                                    .expiresAt
-                            )
-                        action?.isEnabled =
-                            true
-                    } else {
-                        openUpgrade()
-                    }
-                }
-            } catch (error: Exception) {
-                mainHandler.post {
-                    action?.isEnabled =
-                        false
-                    status?.text =
-                        "Não foi possível verificar o acesso."
-                    Toast.makeText(
-                        this,
-                        error.message.orEmpty(),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+        if (
+            entitlement.hasAccess("PRO")
+        ) {
+            status?.text =
+                "Pro ativo."
+            action?.isEnabled =
+                true
+        } else {
+            openUpgrade()
         }
     }
 
@@ -506,24 +466,6 @@ class ProDemoActivity : ComponentActivity() {
             )
         )
         finish()
-    }
-
-    private fun expiryText(
-        expiresAt: Long?
-    ): String {
-        if (expiresAt == null) {
-            return ""
-        }
-
-        return "\nVálido até: " +
-            java.text.SimpleDateFormat(
-                "dd/MM/yyyy HH:mm",
-                Locale.getDefault()
-            ).format(
-                java.util.Date(
-                    expiresAt * 1000L
-                )
-            )
     }
 
     private fun analyze(
