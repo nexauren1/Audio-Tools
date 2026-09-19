@@ -38,7 +38,7 @@ android {
         minSdk = 23
         targetSdk = 37
         versionCode = automaticVersionCode
-        versionName = "0.10.0"
+        versionName = "0.11.0"
         buildConfigField(
             "String",
             "PAYMENTS_BASE_URL",
