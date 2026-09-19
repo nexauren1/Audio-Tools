@@ -10,7 +10,6 @@ import androidx.core.content.ContextCompat
 import com.nexauren.audiotools.R
 import kotlin.math.abs
 import kotlin.math.sin
-import kotlin.random.Random
 
 class SignalPreviewView(
     context: Context,
@@ -25,7 +24,8 @@ class SignalPreviewView(
     }
     private val waveform = FloatArray(64) { index ->
         val base = abs(sin(index * 0.57f)) * 0.72f
-        (0.16f + base * (0.55f + Random(index).nextFloat() * 0.35f)).coerceIn(0.08f, 0.94f)
+        val variation = 0.55f + abs(sin(index * 2.31f)) * 0.35f
+        (0.16f + base * variation).coerceIn(0.08f, 0.94f)
     }
     private var phase = 0f
     private var level = 0.28f
