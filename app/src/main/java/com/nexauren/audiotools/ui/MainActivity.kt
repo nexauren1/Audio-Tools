@@ -818,10 +818,6 @@ class MainActivity : ComponentActivity() {
         card.addView(content)
 
         card.setOnClickListener {
-            UsageStore.record(
-                this,
-                tool.id
-            )
             openToolOrUpgrade(tool, card)
         }
 
@@ -1264,6 +1260,8 @@ class MainActivity : ComponentActivity() {
     private fun openTool(
         tool: AudioTool
     ) {
+        UsageStore.record(this, tool.id)
+
         if (tool.id == "pro-inspector") {
             startActivity(
                 ProDemoActivity.intent(this)
