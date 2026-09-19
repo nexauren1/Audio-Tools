@@ -11,11 +11,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.nexauren.audiotools.R
+import kotlinx.coroutines.launch
 
 class AccountActivity : ComponentActivity() {
     private val auth by lazy { FirebaseAuth.getInstance() }
+    private val credentialManager by lazy { CredentialManager.create(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -191,7 +196,20 @@ class AccountActivity : ComponentActivity() {
             .setNegativeButton(AuthStrings.t(this, "cancel"), null)
             .setPositiveButton(AuthStrings.t(this, "logout")) { _, _ ->
                 auth.signOut()
-                openAuth()
+                lifecycleScope.launch {
+                    try {
+                        credentialManager.clearCredentialState(
+                            ClearCredentialStateRequest()
+                        )
+                    } catch (error: Exception) {
+                        android.util.Log.w(
+                            "AccountActivity",
+                            "Could not clear Credential Manager state.",
+                            error
+                        )
+                    }
+                    openAuth()
+                }
             }
             .show()
     }
