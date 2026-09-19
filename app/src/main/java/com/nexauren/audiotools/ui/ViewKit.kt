@@ -204,6 +204,28 @@ object ViewKit {
                             }
                         )
                     )
+
+                setOnTouchListener { view, event ->
+                    when (event.actionMasked) {
+                        android.view.MotionEvent.ACTION_DOWN -> {
+                            view.animate()
+                                .scaleX(0.985f)
+                                .scaleY(0.985f)
+                                .setDuration(70L)
+                                .start()
+                        }
+
+                        android.view.MotionEvent.ACTION_UP,
+                        android.view.MotionEvent.ACTION_CANCEL -> {
+                            view.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(90L)
+                                .start()
+                        }
+                    }
+                    false
+                }
             }
         }
 
