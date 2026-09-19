@@ -5,6 +5,48 @@ const FIREBASE_JWKS_URL =
 let jwksCache = null;
 let jwksExpiresAt = 0;
 
+const PLAN_DEFINITIONS = {
+  FREE: {
+    name: "Free",
+    priceUsd: "0.00",
+    durationDays: null,
+    billingInterval: "NONE",
+    description:
+      "Acesso gratuito às ferramentas disponíveis no plano Free.",
+    includes: [
+      "Ferramentas Free",
+      "Processamento local disponível"
+    ]
+  },
+  PRO: {
+    name: "Pro",
+    priceUsd: "5.00",
+    durationDays: 30,
+    billingInterval: "MONTH",
+    description:
+      "Mais ferramentas e recursos para quem trabalha com áudio com mais frequência.",
+    includes: [
+      "Tudo do Free",
+      "Ferramentas Pro",
+      "Novos recursos Pro"
+    ]
+  },
+  PREMIUM: {
+    name: "Premium",
+    priceUsd: "10.00",
+    durationDays: 30,
+    billingInterval: "MONTH",
+    description:
+      "Acesso completo ao Pro e aos recursos Premium do Audio Tools.",
+    includes: [
+      "Tudo do Free",
+      "Tudo do Pro",
+      "Ferramentas Premium",
+      "Novos recursos Premium"
+    ]
+  }
+};
+
 function corsHeaders() {
   return {
     "access-control-allow-origin": "*",
@@ -39,14 +81,31 @@ function nowSeconds() {
   return Math.floor(Date.now() / 1000);
 }
 
+function isoToSeconds(value) {
+  if (!value) {
+    return null;
+  }
+
+  const time = Date.parse(value);
+
+  return Number.isFinite(time)
+    ? Math.floor(time / 1000)
+    : null;
+}
+
 function base64UrlToBytes(value) {
   const normalized = value
     .replace(/-/g, "+")
     .replace(/_/g, "/")
-    .padEnd(Math.ceil(value.length / 4) * 4, "=");
+    .padEnd(
+      Math.ceil(value.length / 4) * 4,
+      "="
+    );
 
   const binary = atob(normalized);
-  const bytes = new Uint8Array(binary.length);
+  const bytes = new Uint8Array(
+    binary.length
+  );
 
   for (let i = 0; i < binary.length; i += 1) {
     bytes[i] = binary.charCodeAt(i);
@@ -57,22 +116,30 @@ function base64UrlToBytes(value) {
 
 function decodeBase64UrlJson(value) {
   return JSON.parse(
-    new TextDecoder().decode(base64UrlToBytes(value))
+    new TextDecoder().decode(
+      base64UrlToBytes(value)
+    )
   );
 }
 
 async function getFirebaseJwks() {
   const now = Date.now();
 
-  if (jwksCache && jwksExpiresAt > now) {
+  if (
+    jwksCache &&
+    jwksExpiresAt > now
+  ) {
     return jwksCache;
   }
 
-  const response = await fetch(FIREBASE_JWKS_URL, {
-    headers: {
-      accept: "application/json"
+  const response = await fetch(
+    FIREBASE_JWKS_URL,
+    {
+      headers: {
+        accept: "application/json"
+      }
     }
-  });
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -82,16 +149,21 @@ async function getFirebaseJwks() {
 
   const data = await response.json();
   const cacheControl =
-    response.headers.get("cache-control") || "";
+    response.headers.get(
+      "cache-control"
+    ) || "";
   const match =
-    cacheControl.match(/max-age=(\\d+)/i);
+    cacheControl.match(
+      /max-age=(\d+)/i
+    );
 
   const maxAgeSeconds = match
     ? Number(match[1])
     : 3600;
 
   jwksCache = data.keys || [];
-  jwksExpiresAt = now + maxAgeSeconds * 1000;
+  jwksExpiresAt =
+    now + maxAgeSeconds * 1000;
 
   return jwksCache;
 }
@@ -103,23 +175,38 @@ async function verifyFirebaseIdToken(
   const parts = idToken.split(".");
 
   if (parts.length !== 3) {
-    throw new Error("Invalid Firebase token.");
+    throw new Error(
+      "Invalid Firebase token."
+    );
   }
 
-  const [headerPart, payloadPart, signaturePart] =
-    parts;
+  const [
+    headerPart,
+    payloadPart,
+    signaturePart
+  ] = parts;
 
-  const header = decodeBase64UrlJson(headerPart);
-  const payload = decodeBase64UrlJson(payloadPart);
+  const header =
+    decodeBase64UrlJson(
+      headerPart
+    );
+  const payload =
+    decodeBase64UrlJson(
+      payloadPart
+    );
 
-  if (header.alg !== "RS256" || !header.kid) {
+  if (
+    header.alg !== "RS256" ||
+    !header.kid
+  ) {
     throw new Error(
       "Invalid Firebase token header."
     );
   }
 
   const projectId =
-    env.FIREBASE_PROJECT_ID || "audio-tools-e725e";
+    env.FIREBASE_PROJECT_ID ||
+    "audio-tools-e725";
 
   const now = nowSeconds();
 
@@ -127,7 +214,9 @@ async function verifyFirebaseIdToken(
     typeof payload.exp !== "number" ||
     payload.exp <= now
   ) {
-    throw new Error("Firebase token expired.");
+    throw new Error(
+      "Firebase token expired."
+    );
   }
 
   if (
@@ -168,17 +257,23 @@ async function verifyFirebaseIdToken(
     );
   }
 
-  const keys = await getFirebaseJwks();
+  const keys =
+    await getFirebaseJwks();
+
   let jwk = keys.find(
-    (key) => key.kid === header.kid
+    (key) =>
+      key.kid === header.kid
   );
 
   if (!jwk) {
     jwksExpiresAt = 0;
-    const refreshed = await getFirebaseJwks();
+
+    const refreshed =
+      await getFirebaseJwks();
 
     jwk = refreshed.find(
-      (key) => key.kid === header.kid
+      (key) =>
+        key.kid === header.kid
     );
   }
 
@@ -188,27 +283,35 @@ async function verifyFirebaseIdToken(
     );
   }
 
-  const publicKey = await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256"
-    },
-    false,
-    ["verify"]
-  );
+  const publicKey =
+    await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      {
+        name:
+          "RSASSA-PKCS1-v1_5",
+        hash: "SHA-256"
+      },
+      false,
+      ["verify"]
+    );
 
-  const valid = await crypto.subtle.verify(
-    {
-      name: "RSASSA-PKCS1-v1_5"
-    },
-    publicKey,
-    base64UrlToBytes(signaturePart),
-    new TextEncoder().encode(
-      headerPart + "." + payloadPart
-    )
-  );
+  const valid =
+    await crypto.subtle.verify(
+      {
+        name:
+          "RSASSA-PKCS1-v1_5"
+      },
+      publicKey,
+      base64UrlToBytes(
+        signaturePart
+      ),
+      new TextEncoder().encode(
+        headerPart +
+        "." +
+        payloadPart
+      )
+    );
 
   if (!valid) {
     throw new Error(
@@ -219,7 +322,8 @@ async function verifyFirebaseIdToken(
   return {
     uid: payload.sub,
     email:
-      typeof payload.email === "string"
+      typeof payload.email ===
+      "string"
         ? payload.email
         : null
   };
@@ -227,22 +331,32 @@ async function verifyFirebaseIdToken(
 
 function getBearerToken(request) {
   const value =
-    request.headers.get("authorization") || "";
+    request.headers.get(
+      "authorization"
+    ) || "";
 
-  if (!value.startsWith("Bearer ")) {
+  if (!value.startsWith(
+    "Bearer "
+  )) {
     return null;
   }
 
-  return value.slice(7).trim() || null;
+  return value.slice(7).trim() ||
+    null;
 }
 
-async function requireUser(request, env) {
-  const token = getBearerToken(request);
+async function requireUser(
+  request,
+  env
+) {
+  const token =
+    getBearerToken(request);
 
   if (!token) {
     throw new Response(
       JSON.stringify({
-        error: "Authentication required."
+        error:
+          "Authentication required."
       }),
       {
         status: 401,
@@ -268,7 +382,8 @@ async function requireUser(request, env) {
 
     throw new Response(
       JSON.stringify({
-        error: "Invalid authentication token."
+        error:
+          "Invalid authentication token."
       }),
       {
         status: 401,
@@ -283,281 +398,52 @@ async function requireUser(request, env) {
 }
 
 function paypalBaseUrl(env) {
-  return env.PAYPAL_ENVIRONMENT === "live"
+  return env.PAYPAL_ENVIRONMENT ===
+    "live"
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
 }
 
-function proPrice(env) {
-  const value =
-    Number(env.PRO_PRICE_USD || "5.00");
-
-  if (!Number.isFinite(value) || value <= 0) {
-    throw new Error(
-      "PRO_PRICE_USD is invalid."
-    );
-  }
-
-  return value.toFixed(2);
-}
-
-function proDurationDays(env) {
-  const value =
-    Number(env.PRO_DURATION_DAYS || "30");
-
-  if (!Number.isInteger(value) || value < 1) {
-    throw new Error(
-      "PRO_DURATION_DAYS is invalid."
-    );
-  }
-
-  return value;
-}
-
-async function ensureDatabaseSchema(db) {
-  const exists = await db.prepare(
-    "SELECT name FROM sqlite_master " +
-    "WHERE type = 'table' AND name = 'entitlements'"
-  ).first();
-
-  if (!exists) {
-    await db.prepare(
-      "CREATE TABLE entitlements (" +
-      "firebase_uid TEXT PRIMARY KEY," +
-      "plan TEXT NOT NULL DEFAULT 'FREE'," +
-      "starts_at INTEGER," +
-      "expires_at INTEGER," +
-      "status TEXT NOT NULL DEFAULT 'ACTIVE'," +
-      "source TEXT NOT NULL DEFAULT 'SYSTEM'," +
-      "updated_at INTEGER NOT NULL," +
-      "last_order_id TEXT)"
-    ).run();
-  } else {
-    const columns = await db.prepare(
-      "PRAGMA table_info(entitlements)"
-    ).all();
-
-    const names = new Set(
-      (columns.results || []).map(
-        (row) => row.name
-      )
-    );
-
-    const additions = [
-      ["starts_at", "INTEGER"],
-      ["status", "TEXT NOT NULL DEFAULT 'ACTIVE'"],
-      ["source", "TEXT NOT NULL DEFAULT 'SYSTEM'"],
-      ["last_order_id", "TEXT"]
-    ];
-
-    for (const [name, definition] of additions) {
-      if (!names.has(name)) {
-        await db.prepare(
-          "ALTER TABLE entitlements ADD COLUMN " +
-          name + " " + definition
-        ).run();
-      }
-    }
-  }
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_entitlements_plan " +
-    "ON entitlements(plan)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_entitlements_status " +
-    "ON entitlements(status)"
-  ).run();
-
-  await db.prepare(
-    "CREATE TABLE IF NOT EXISTS paypal_orders (" +
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-    "firebase_uid TEXT NOT NULL," +
-    "order_id TEXT NOT NULL UNIQUE," +
-    "plan_id TEXT NOT NULL," +
-    "amount TEXT NOT NULL," +
-    "currency TEXT NOT NULL," +
-    "status TEXT NOT NULL DEFAULT 'CREATED'," +
-    "created_at INTEGER NOT NULL," +
-    "captured_at INTEGER," +
-    "payer_id TEXT)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_paypal_orders_uid " +
-    "ON paypal_orders(firebase_uid)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_paypal_orders_status " +
-    "ON paypal_orders(status)"
-  ).run();
-
-  await db.prepare(
-    "CREATE TABLE IF NOT EXISTS plans (" +
-    "plan_id TEXT PRIMARY KEY," +
-    "name TEXT NOT NULL," +
-    "price_usd TEXT NOT NULL DEFAULT '0.00'," +
-    "duration_days INTEGER," +
-    "monthly_credits INTEGER NOT NULL DEFAULT 0," +
-    "active INTEGER NOT NULL DEFAULT 1," +
-    "created_at INTEGER NOT NULL," +
-    "updated_at INTEGER NOT NULL)"
-  ).run();
-
-  const timestamp = nowSeconds();
-
-  await db.prepare(
-    "INSERT OR IGNORE INTO plans " +
-    "(plan_id, name, price_usd, duration_days, " +
-    "monthly_credits, active, created_at, updated_at) " +
-    "VALUES (?, ?, ?, ?, ?, 1, ?, ?)"
-  )
-    .bind(
-      "FREE",
-      "Free",
-      "0.00",
-      null,
-      0,
-      timestamp,
-      timestamp
-    )
-    .run();
-
-  await db.prepare(
-    "INSERT OR IGNORE INTO plans " +
-    "(plan_id, name, price_usd, duration_days, " +
-    "monthly_credits, active, created_at, updated_at) " +
-    "VALUES (?, ?, ?, ?, ?, 1, ?, ?)"
-  )
-    .bind(
-      "PRO",
-      "Pro",
-      "5.00",
-      30,
-      1000,
-      timestamp,
-      timestamp
-    )
-    .run();
-
-  await db.prepare(
-    "CREATE TABLE IF NOT EXISTS credit_accounts (" +
-    "firebase_uid TEXT PRIMARY KEY," +
-    "purchased_credits INTEGER NOT NULL DEFAULT 0," +
-    "plan_credits INTEGER NOT NULL DEFAULT 0," +
-    "updated_at INTEGER NOT NULL)"
-  ).run();
-
-  await db.prepare(
-    "CREATE TABLE IF NOT EXISTS credit_transactions (" +
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-    "firebase_uid TEXT NOT NULL," +
-    "bucket TEXT NOT NULL," +
-    "amount INTEGER NOT NULL," +
-    "type TEXT NOT NULL," +
-    "source TEXT NOT NULL," +
-    "reference_id TEXT," +
-    "created_at INTEGER NOT NULL)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_credit_transactions_uid " +
-    "ON credit_transactions(firebase_uid)"
-  ).run();
-
-  await db.prepare(
-    "CREATE TABLE IF NOT EXISTS tool_usage (" +
-    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-    "firebase_uid TEXT NOT NULL," +
-    "tool_id TEXT NOT NULL," +
-    "credits_used INTEGER NOT NULL DEFAULT 0," +
-    "created_at INTEGER NOT NULL)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_tool_usage_uid " +
-    "ON tool_usage(firebase_uid)"
-  ).run();
-
-  await db.prepare(
-    "CREATE INDEX IF NOT EXISTS idx_tool_usage_tool " +
-    "ON tool_usage(tool_id)"
-  ).run();
-}
-
-async function ensureEntitlement(db, uid) {
-  const existing = await db.prepare(
-    "SELECT firebase_uid, plan, expires_at, " +
-    "updated_at, last_order_id " +
-    "FROM entitlements WHERE firebase_uid = ?"
-  )
-    .bind(uid)
-    .first();
-
-  if (existing) {
-    return existing;
-  }
-
-  const timestamp = nowSeconds();
-
-  await db.prepare(
-    "INSERT OR IGNORE INTO entitlements " +
-    "(firebase_uid, plan, starts_at, expires_at, " +
-    "status, source, updated_at, last_order_id) " +
-    "VALUES (?, 'FREE', ?, NULL, 'ACTIVE', " +
-    "'SYSTEM', ?, NULL)"
-  )
-    .bind(uid, timestamp, timestamp)
-    .run();
-
-  return db.prepare(
-    "SELECT firebase_uid, plan, expires_at, " +
-    "updated_at, last_order_id " +
-    "FROM entitlements WHERE firebase_uid = ?"
-  )
-    .bind(uid)
-    .first();
-}
-
-function isPro(entitlement) {
-  return entitlement &&
-    entitlement.plan === "PRO" &&
-    entitlement.status === "ACTIVE" &&
-    Number(entitlement.expires_at || 0) >
-      nowSeconds();
-}
-
-async function getPayPalAccessToken(env) {
-  const clientId = env.PAYPAL_CLIENT_ID;
+async function getPayPalAccessToken(
+  env
+) {
+  const clientId =
+    env.PAYPAL_CLIENT_ID;
   const clientSecret =
     env.PAYPAL_CLIENT_SECRET;
 
-  if (!clientId || !clientSecret) {
+  if (
+    !clientId ||
+    !clientSecret
+  ) {
     throw new Error(
       "PayPal credentials are not configured."
     );
   }
 
-  const response = await fetch(
-    paypalBaseUrl(env) +
-      "/v1/oauth2/token",
-    {
-      method: "POST",
-      headers: {
-        authorization:
-          "Basic " +
-          btoa(
-            clientId + ":" + clientSecret
-          ),
-        "content-type":
-          "application/x-www-form-urlencoded",
-        accept: "application/json"
-      },
-      body: "grant_type=client_credentials"
-    }
-  );
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+        "/v1/oauth2/token",
+      {
+        method: "POST",
+        headers: {
+          authorization:
+            "Basic " +
+            btoa(
+              clientId +
+              ":" +
+              clientSecret
+            ),
+          "content-type":
+            "application/x-www-form-urlencoded",
+          accept:
+            "application/json"
+        },
+        body:
+          "grant_type=client_credentials"
+      }
+    );
 
   if (!response.ok) {
     console.error(
@@ -570,7 +456,8 @@ async function getPayPalAccessToken(env) {
     );
   }
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!data.access_token) {
     throw new Error(
@@ -581,422 +468,1565 @@ async function getPayPalAccessToken(env) {
   return data.access_token;
 }
 
-async function createPayPalOrder(
+async function tableExists(
+  db,
+  name
+) {
+  const result =
+    await db.prepare(
+      "SELECT name FROM sqlite_master " +
+      "WHERE type = 'table' AND name = ?"
+    )
+      .bind(name)
+      .first();
+
+  return Boolean(result);
+}
+
+async function tableColumns(
+  db,
+  tableName
+) {
+  const result =
+    await db.prepare(
+      "PRAGMA table_info(" +
+      tableName +
+      ")"
+    ).all();
+
+  return new Set(
+    (result.results || [])
+      .map(
+        (row) => row.name
+      )
+  );
+}
+
+async function rebuildPlansIfLegacy(
+  db
+) {
+  if (
+    !await tableExists(
+      db,
+      "plans"
+    )
+  ) {
+    return;
+  }
+
+  const columns =
+    await tableColumns(
+      db,
+      "plans"
+    );
+
+  if (
+    !columns.has(
+      "monthly_credits"
+    )
+  ) {
+    return;
+  }
+
+  await db.prepare(
+    "CREATE TABLE plans_v2 (" +
+    "plan_id TEXT PRIMARY KEY," +
+    "name TEXT NOT NULL," +
+    "price_usd TEXT NOT NULL DEFAULT '0.00'," +
+    "duration_days INTEGER," +
+    "billing_interval TEXT NOT NULL DEFAULT 'NONE'," +
+    "description TEXT NOT NULL DEFAULT ''," +
+    "includes TEXT NOT NULL DEFAULT '[]'," +
+    "paypal_product_id TEXT," +
+    "paypal_plan_id TEXT," +
+    "active INTEGER NOT NULL DEFAULT 1," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL)"
+  ).run();
+
+  await db.prepare(
+    "INSERT INTO plans_v2 (" +
+    "plan_id, name, price_usd, duration_days, " +
+    "active, created_at, updated_at) " +
+    "SELECT plan_id, name, price_usd, duration_days, " +
+    "active, created_at, updated_at " +
+    "FROM plans"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE plans"
+  ).run();
+
+  await db.prepare(
+    "ALTER TABLE plans_v2 " +
+    "RENAME TO plans"
+  ).run();
+}
+
+async function rebuildEntitlementsIfLegacy(
+  db
+) {
+  if (
+    !await tableExists(
+      db,
+      "entitlements"
+    )
+  ) {
+    return;
+  }
+
+  const columns =
+    await tableColumns(
+      db,
+      "entitlements"
+    );
+
+  if (
+    !columns.has(
+      "last_order_id"
+    )
+  ) {
+    return;
+  }
+
+  await db.prepare(
+    "CREATE TABLE entitlements_v2 (" +
+    "firebase_uid TEXT PRIMARY KEY," +
+    "plan TEXT NOT NULL DEFAULT 'FREE'," +
+    "starts_at INTEGER," +
+    "expires_at INTEGER," +
+    "status TEXT NOT NULL DEFAULT 'ACTIVE'," +
+    "source TEXT NOT NULL DEFAULT 'SYSTEM'," +
+    "updated_at INTEGER NOT NULL," +
+    "last_subscription_id TEXT)"
+  ).run();
+
+  await db.prepare(
+    "INSERT INTO entitlements_v2 (" +
+    "firebase_uid, plan, starts_at, expires_at, " +
+    "status, source, updated_at) " +
+    "SELECT firebase_uid, plan, starts_at, expires_at, " +
+    "status, source, updated_at " +
+    "FROM entitlements"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE entitlements"
+  ).run();
+
+  await db.prepare(
+    "ALTER TABLE entitlements_v2 " +
+    "RENAME TO entitlements"
+  ).run();
+}
+
+async function ensureDatabaseSchema(db) {
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS schema_meta (" +
+    "key TEXT PRIMARY KEY," +
+    "value TEXT NOT NULL)"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE IF EXISTS credit_transactions"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE IF EXISTS credit_accounts"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE IF EXISTS paypal_orders"
+  ).run();
+
+  await db.prepare(
+    "DROP TABLE IF EXISTS tool_usage"
+  ).run();
+
+  await rebuildPlansIfLegacy(
+    db
+  );
+
+  await rebuildEntitlementsIfLegacy(
+    db
+  );
+
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS plans (" +
+    "plan_id TEXT PRIMARY KEY," +
+    "name TEXT NOT NULL," +
+    "price_usd TEXT NOT NULL DEFAULT '0.00'," +
+    "duration_days INTEGER," +
+    "billing_interval TEXT NOT NULL DEFAULT 'NONE'," +
+    "description TEXT NOT NULL DEFAULT ''," +
+    "includes TEXT NOT NULL DEFAULT '[]'," +
+    "paypal_product_id TEXT," +
+    "paypal_plan_id TEXT," +
+    "active INTEGER NOT NULL DEFAULT 1," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL)"
+  ).run();
+
+  let planColumns =
+    await tableColumns(
+      db,
+      "plans"
+    );
+
+  const planAdditions = [
+    [
+      "billing_interval",
+      "TEXT NOT NULL DEFAULT 'NONE'"
+    ],
+    [
+      "description",
+      "TEXT NOT NULL DEFAULT ''"
+    ],
+    [
+      "includes",
+      "TEXT NOT NULL DEFAULT '[]'"
+    ],
+    [
+      "paypal_product_id",
+      "TEXT"
+    ],
+    [
+      "paypal_plan_id",
+      "TEXT"
+    ]
+  ];
+
+  for (
+    const [name, definition]
+    of planAdditions
+  ) {
+    if (!planColumns.has(name)) {
+      await db.prepare(
+        "ALTER TABLE plans ADD COLUMN " +
+        name +
+        " " +
+        definition
+      ).run();
+    }
+  }
+
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS entitlements (" +
+    "firebase_uid TEXT PRIMARY KEY," +
+    "plan TEXT NOT NULL DEFAULT 'FREE'," +
+    "starts_at INTEGER," +
+    "expires_at INTEGER," +
+    "status TEXT NOT NULL DEFAULT 'ACTIVE'," +
+    "source TEXT NOT NULL DEFAULT 'SYSTEM'," +
+    "updated_at INTEGER NOT NULL," +
+    "last_subscription_id TEXT)"
+  ).run();
+
+  const entitlementColumns =
+    await tableColumns(
+      db,
+      "entitlements"
+    );
+
+  if (
+    !entitlementColumns.has(
+      "last_subscription_id"
+    )
+  ) {
+    await db.prepare(
+      "ALTER TABLE entitlements ADD COLUMN " +
+      "last_subscription_id TEXT"
+    ).run();
+  }
+
+  await db.prepare(
+    "CREATE TABLE IF NOT EXISTS paypal_subscriptions (" +
+    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+    "firebase_uid TEXT NOT NULL," +
+    "subscription_id TEXT NOT NULL UNIQUE," +
+    "plan_id TEXT NOT NULL," +
+    "paypal_plan_id TEXT NOT NULL," +
+    "status TEXT NOT NULL DEFAULT 'APPROVAL_PENDING'," +
+    "created_at INTEGER NOT NULL," +
+    "updated_at INTEGER NOT NULL," +
+    "approved_at INTEGER," +
+    "current_period_end INTEGER," +
+    "next_billing_time INTEGER," +
+    "payer_id TEXT)"
+  ).run();
+
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS " +
+    "idx_entitlements_plan " +
+    "ON entitlements(plan)"
+  ).run();
+
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS " +
+    "idx_entitlements_status " +
+    "ON entitlements(status)"
+  ).run();
+
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS " +
+    "idx_paypal_subscriptions_uid " +
+    "ON paypal_subscriptions(firebase_uid)"
+  ).run();
+
+  await db.prepare(
+    "CREATE INDEX IF NOT EXISTS " +
+    "idx_paypal_subscriptions_status " +
+    "ON paypal_subscriptions(status)"
+  ).run();
+
+  const timestamp =
+    nowSeconds();
+
+  for (
+    const [planId, definition]
+    of Object.entries(
+      PLAN_DEFINITIONS
+    )
+  ) {
+    await db.prepare(
+      "INSERT OR IGNORE INTO plans (" +
+      "plan_id, name, price_usd, duration_days, " +
+      "billing_interval, description, includes, " +
+      "active, created_at, updated_at) " +
+      "VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)"
+    )
+      .bind(
+        planId,
+        definition.name,
+        definition.priceUsd,
+        definition.durationDays,
+        definition.billingInterval,
+        definition.description,
+        JSON.stringify(
+          definition.includes
+        ),
+        timestamp,
+        timestamp
+      )
+      .run();
+  }
+
+  for (
+    const [planId, definition]
+    of Object.entries(
+      PLAN_DEFINITIONS
+    )
+  ) {
+    await db.prepare(
+      "UPDATE plans SET " +
+      "name = ?, price_usd = ?, duration_days = ?, " +
+      "billing_interval = ?, description = ?, " +
+      "includes = ?, active = 1, updated_at = ? " +
+      "WHERE plan_id = ?"
+    )
+      .bind(
+        definition.name,
+        definition.priceUsd,
+        definition.durationDays,
+        definition.billingInterval,
+        definition.description,
+        JSON.stringify(
+          definition.includes
+        ),
+        timestamp,
+        planId
+      )
+      .run();
+  }
+
+  await db.prepare(
+    "INSERT OR REPLACE INTO schema_meta " +
+    "(key, value) VALUES ('version', '3')"
+  ).run();
+}
+
+async function ensureEntitlement(
+  db,
+  uid
+) {
+  const existing =
+    await db.prepare(
+      "SELECT firebase_uid, plan, starts_at, " +
+      "expires_at, status, source, updated_at, " +
+      "last_subscription_id " +
+      "FROM entitlements " +
+      "WHERE firebase_uid = ?"
+    )
+      .bind(uid)
+      .first();
+
+  if (existing) {
+    return existing;
+  }
+
+  const timestamp =
+    nowSeconds();
+
+  await db.prepare(
+    "INSERT OR IGNORE INTO entitlements (" +
+    "firebase_uid, plan, starts_at, expires_at, " +
+    "status, source, updated_at, " +
+    "last_subscription_id) " +
+    "VALUES (?, 'FREE', ?, NULL, 'ACTIVE', " +
+    "'SYSTEM', ?, NULL)"
+  )
+    .bind(
+      uid,
+      timestamp,
+      timestamp
+    )
+    .run();
+
+  return db.prepare(
+    "SELECT firebase_uid, plan, starts_at, " +
+    "expires_at, status, source, updated_at, " +
+    "last_subscription_id " +
+    "FROM entitlements " +
+    "WHERE firebase_uid = ?"
+  )
+    .bind(uid)
+    .first();
+}
+
+function planRank(plan) {
+  if (plan === "PREMIUM") {
+    return 2;
+  }
+
+  if (plan === "PRO") {
+    return 1;
+  }
+
+  return 0;
+}
+
+function hasPlanAccess(
+  currentPlan,
+  requiredPlan
+) {
+  return (
+    planRank(currentPlan) >=
+    planRank(requiredPlan)
+  );
+}
+
+async function getPlan(
+  db,
+  planId
+) {
+  return db.prepare(
+    "SELECT * FROM plans " +
+    "WHERE plan_id = ? AND active = 1"
+  )
+    .bind(planId)
+    .first();
+}
+
+function parsePlanIncludes(
+  value
+) {
+  try {
+    const parsed =
+      JSON.parse(value || "[]");
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function updateEntitlementFromSubscription(
+  db,
+  uid,
+  subscription
+) {
+  const status =
+    subscription.status || "";
+
+  const nextBillingTime =
+    isoToSeconds(
+      subscription?.billing_info
+        ?.next_billing_time
+    );
+
+  const startTime =
+    isoToSeconds(
+      subscription.start_time
+    ) || nowSeconds();
+
+  const payerId =
+    subscription?.subscriber
+      ?.payer_id || null;
+
+  const now =
+    nowSeconds();
+
+  const local =
+    await db.prepare(
+      "SELECT plan_id " +
+      "FROM paypal_subscriptions " +
+      "WHERE subscription_id = ? " +
+      "AND firebase_uid = ?"
+    )
+      .bind(
+        subscription.id,
+        uid
+      )
+      .first();
+
+  if (!local) {
+    return null;
+  }
+
+  await db.prepare(
+    "UPDATE paypal_subscriptions SET " +
+    "status = ?, updated_at = ?, " +
+    "approved_at = CASE " +
+    "WHEN ? IN ('APPROVED', 'ACTIVE') " +
+    "THEN COALESCE(approved_at, ?) " +
+    "ELSE approved_at END, " +
+    "current_period_end = ?, " +
+    "next_billing_time = ?, " +
+    "payer_id = ? " +
+    "WHERE subscription_id = ? " +
+    "AND firebase_uid = ?"
+  )
+    .bind(
+      status,
+      now,
+      status,
+      now,
+      nextBillingTime,
+      nextBillingTime,
+      payerId,
+      subscription.id,
+      uid
+    )
+    .run();
+
+  const active =
+    (
+      status === "ACTIVE" ||
+      status === "APPROVED"
+    ) &&
+    nextBillingTime !== null &&
+    nextBillingTime > now;
+
+  const cancelledWithTime =
+    status === "CANCELLED" &&
+    nextBillingTime !== null &&
+    nextBillingTime > now;
+
+  const entitlement =
+    await ensureEntitlement(
+      db,
+      uid
+    );
+
+  if (
+    (
+      active ||
+      cancelledWithTime
+    ) &&
+    hasPlanAccess(
+      local.plan_id,
+      "PRO"
+    )
+  ) {
+    await db.prepare(
+      "UPDATE entitlements SET " +
+      "plan = ?, starts_at = ?, expires_at = ?, " +
+      "status = 'ACTIVE', source = 'PAYPAL', " +
+      "updated_at = ?, last_subscription_id = ? " +
+      "WHERE firebase_uid = ?"
+    )
+      .bind(
+        local.plan_id,
+        startTime,
+        nextBillingTime,
+        now,
+        subscription.id,
+        uid
+      )
+      .run();
+  } else if (
+    entitlement.plan ===
+    local.plan_id
+  ) {
+    await db.prepare(
+      "UPDATE entitlements SET " +
+      "plan = 'FREE', starts_at = NULL, " +
+      "expires_at = NULL, status = 'ACTIVE', " +
+      "source = 'SYSTEM', updated_at = ? " +
+      "WHERE firebase_uid = ?"
+    )
+      .bind(
+        now,
+        uid
+      )
+      .run();
+  }
+
+  return db.prepare(
+    "SELECT firebase_uid, plan, starts_at, " +
+    "expires_at, status, source, updated_at, " +
+    "last_subscription_id " +
+    "FROM entitlements " +
+    "WHERE firebase_uid = ?"
+  )
+    .bind(uid)
+    .first();
+}
+
+async function syncUserSubscription(
+  db,
+  env,
+  uid
+) {
+  const entitlement =
+    await ensureEntitlement(
+      db,
+      uid
+    );
+
+  if (
+    !entitlement.last_subscription_id
+  ) {
+    return entitlement;
+  }
+
+  try {
+    const accessToken =
+      await getPayPalAccessToken(
+        env
+      );
+
+    const response =
+      await fetch(
+        paypalBaseUrl(env) +
+        "/v1/billing/subscriptions/" +
+        encodeURIComponent(
+          entitlement
+            .last_subscription_id
+        ),
+        {
+          method: "GET",
+          headers: {
+            authorization:
+              "Bearer " +
+              accessToken,
+            accept:
+              "application/json"
+          }
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      console.error(
+        "PayPal subscription lookup failed",
+        response.status
+      );
+      return entitlement;
+    }
+
+    return (
+      await updateEntitlementFromSubscription(
+        db,
+        uid,
+        data
+      )
+    ) || entitlement;
+  } catch (error) {
+    console.error(
+      "PayPal entitlement sync failed",
+      error
+    );
+
+    return entitlement;
+  }
+}
+
+async function listPlans(
+  env
+) {
+  const result =
+    await env.DB.prepare(
+      "SELECT plan_id, name, price_usd, " +
+      "duration_days, billing_interval, " +
+      "description, includes, active " +
+      "FROM plans WHERE active = 1 " +
+      "ORDER BY CASE plan_id " +
+      "WHEN 'FREE' THEN 1 " +
+      "WHEN 'PRO' THEN 2 " +
+      "WHEN 'PREMIUM' THEN 3 " +
+      "ELSE 4 END"
+    ).all();
+
+  return json({
+    ok: true,
+    plans:
+      (result.results || [])
+        .map((plan) => ({
+          id: plan.plan_id,
+          name: plan.name,
+          priceUsd:
+            Number(
+              plan.price_usd
+            ),
+          durationDays:
+            plan.duration_days ===
+            null
+              ? null
+              : Number(
+                  plan.duration_days
+                ),
+          billingInterval:
+            plan.billing_interval,
+          description:
+            plan.description,
+          includes:
+            parsePlanIncludes(
+              plan.includes
+            ),
+          active:
+            Number(plan.active) === 1
+        }))
+  });
+}
+
+async function createPayPalProduct(
+  env,
+  accessToken,
+  plan
+) {
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+      "/v1/catalogs/products",
+      {
+        method: "POST",
+        headers: {
+          authorization:
+            "Bearer " +
+            accessToken,
+          "content-type":
+            "application/json",
+          accept:
+            "application/json",
+          "paypal-request-id":
+            "audio-tools-product-" +
+            plan.plan_id
+              .toLowerCase() +
+            "-" +
+            crypto.randomUUID()
+        },
+        body: JSON.stringify({
+          name:
+            "Audio Tools " +
+            plan.name,
+          description:
+            plan.description,
+          type: "SERVICE",
+          category: "SOFTWARE"
+        })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (
+    !response.ok ||
+    !data.id
+  ) {
+    console.error(
+      "PayPal product creation failed",
+      response.status,
+      data
+    );
+
+    throw new Error(
+      "PayPal could not create the subscription product."
+    );
+  }
+
+  return data.id;
+}
+
+async function createPayPalBillingPlan(
+  env,
+  accessToken,
+  plan,
+  productId
+) {
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+      "/v1/billing/plans",
+      {
+        method: "POST",
+        headers: {
+          authorization:
+            "Bearer " +
+            accessToken,
+          "content-type":
+            "application/json",
+          accept:
+            "application/json",
+          "paypal-request-id":
+            "audio-tools-plan-" +
+            plan.plan_id
+              .toLowerCase() +
+            "-" +
+            crypto.randomUUID()
+        },
+        body: JSON.stringify({
+          product_id:
+            productId,
+          name:
+            "Audio Tools " +
+            plan.name +
+            " Monthly",
+          description:
+            plan.description,
+          status: "ACTIVE",
+          billing_cycles: [
+            {
+              frequency: {
+                interval_unit:
+                  "MONTH",
+                interval_count:
+                  1
+              },
+              tenure_type:
+                "REGULAR",
+              sequence: 1,
+              total_cycles: 0,
+              pricing_scheme: {
+                fixed_price: {
+                  value:
+                    Number(
+                      plan.price_usd
+                    )
+                      .toFixed(2),
+                  currency_code:
+                    "USD"
+                }
+              }
+            }
+          ],
+          payment_preferences: {
+            auto_bill_outstanding:
+              true,
+            payment_failure_threshold:
+              2
+          }
+        })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (
+    !response.ok ||
+    !data.id
+  ) {
+    console.error(
+      "PayPal billing plan creation failed",
+      response.status,
+      data
+    );
+
+    throw new Error(
+      "PayPal could not create the subscription plan."
+    );
+  }
+
+  return data.id;
+}
+
+async function ensurePayPalBillingPlan(
+  env,
+  plan
+) {
+  if (
+    plan.paypal_plan_id
+  ) {
+    return plan.paypal_plan_id;
+  }
+
+  const accessToken =
+    await getPayPalAccessToken(
+      env
+    );
+
+  const productId =
+    plan.paypal_product_id ||
+    await createPayPalProduct(
+      env,
+      accessToken,
+      plan
+    );
+
+  if (!plan.paypal_product_id) {
+    await env.DB.prepare(
+      "UPDATE plans SET " +
+      "paypal_product_id = ?, updated_at = ? " +
+      "WHERE plan_id = ?"
+    )
+      .bind(
+        productId,
+        nowSeconds(),
+        plan.plan_id
+      )
+      .run();
+  }
+
+  const paypalPlanId =
+    await createPayPalBillingPlan(
+      env,
+      accessToken,
+      plan,
+      productId
+    );
+
+  await env.DB.prepare(
+    "UPDATE plans SET " +
+    "paypal_plan_id = ?, updated_at = ? " +
+    "WHERE plan_id = ?"
+  )
+    .bind(
+      paypalPlanId,
+      nowSeconds(),
+      plan.plan_id
+    )
+    .run();
+
+  return paypalPlanId;
+}
+
+async function createPayPalSubscription(
   request,
   env,
   user
 ) {
-  const entitlement =
-    await ensureEntitlement(
+  const body =
+    await request
+      .json()
+      .catch(() => ({}));
+
+  const planId =
+    typeof body.planId ===
+    "string"
+      ? body.planId
+          .trim()
+          .toUpperCase()
+      : "";
+
+  if (
+    planId !== "PRO" &&
+    planId !== "PREMIUM"
+  ) {
+    return json(
+      {
+        error:
+          "Escolha um plano mensal válido."
+      },
+      400
+    );
+  }
+
+  const current =
+    await syncUserSubscription(
       env.DB,
+      env,
       user.uid
     );
 
-  if (isPro(entitlement)) {
-    return json({
-      ok: true,
-      alreadyPro: true,
-      plan: "PRO",
-      expiresAt:
-        Number(entitlement.expires_at)
-    });
+  if (
+    current.plan !== "FREE" &&
+    current.status === "ACTIVE" &&
+    Number(
+      current.expires_at || 0
+    ) > nowSeconds()
+  ) {
+    return json(
+      {
+        error:
+          "Esta conta já tem um plano pago ativo.",
+        plan:
+          current.plan,
+        expiresAt:
+          Number(
+            current.expires_at
+          )
+      },
+      409
+    );
   }
 
-  const amount = proPrice(env);
-  const durationDays =
-    proDurationDays(env);
+  const plan =
+    await getPlan(
+      env.DB,
+      planId
+    );
+
+  if (!plan) {
+    return json(
+      {
+        error:
+          "Plano não encontrado."
+      },
+      404
+    );
+  }
+
+  const paypalPlanId =
+    await ensurePayPalBillingPlan(
+      env,
+      plan
+    );
 
   const accessToken =
-    await getPayPalAccessToken(env);
+    await getPayPalAccessToken(
+      env
+    );
 
   const origin =
-    new URL(request.url).origin;
+    new URL(request.url)
+      .origin;
 
-  const orderPayload = {
-    intent: "CAPTURE",
-    purchase_units: [
-      {
-        reference_id:
-          "audio-tools-" +
-          crypto.randomUUID(),
-        description:
-          "Audio Tools Pro - " +
-          durationDays +
-          " days",
-        amount: {
-          currency_code: "USD",
-          value: amount
+  const payload = {
+    plan_id:
+      paypalPlanId,
+    ...(user.email
+      ? {
+          subscriber: {
+            email_address:
+              user.email
+          }
         }
-      }
-    ],
+      : {}),
     application_context: {
-      brand_name: "Audio Tools",
-      user_action: "PAY_NOW",
+      brand_name:
+        "Audio Tools",
+      locale:
+        "pt-PT",
+      shipping_preference:
+        "NO_SHIPPING",
+      user_action:
+        "SUBSCRIBE_NOW",
       return_url:
-        origin + "/api/paypal/return",
+        origin +
+        "/api/paypal/return",
       cancel_url:
-        origin + "/api/paypal/cancel"
+        origin +
+        "/api/paypal/cancel"
     }
   };
 
-  const response = await fetch(
-    paypalBaseUrl(env) +
-      "/v2/checkout/orders",
-    {
-      method: "POST",
-      headers: {
-        authorization:
-          "Bearer " + accessToken,
-        "content-type":
-          "application/json",
-        accept: "application/json",
-        "paypal-request-id":
-          "create-" +
-          crypto.randomUUID()
-      },
-      body: JSON.stringify(orderPayload)
-    }
-  );
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+      "/v1/billing/subscriptions",
+      {
+        method: "POST",
+        headers: {
+          authorization:
+            "Bearer " +
+            accessToken,
+          "content-type":
+            "application/json",
+          accept:
+            "application/json",
+          "paypal-request-id":
+            "audio-tools-subscription-" +
+            crypto.randomUUID()
+        },
+        body:
+          JSON.stringify(
+            payload
+          )
+      }
+    );
 
-  const data = await response.json();
+  const data =
+    await response.json();
 
   if (!response.ok) {
     console.error(
-      "PayPal order creation failed",
-      response.status
+      "PayPal subscription creation failed",
+      response.status,
+      data
     );
 
     return json(
       {
         error:
-          "PayPal could not create the order."
+          "PayPal não conseguiu criar a assinatura.",
+        details:
+          data?.details?.[0]
+            ?.description ||
+          data?.message ||
+          null
       },
       502
     );
   }
 
   const approvalUrl =
-    (data.links || []).find(
-      (link) => link.rel === "approve"
-    )?.href || null;
+    (data.links || [])
+      .find(
+        (link) =>
+          link.rel ===
+          "approve"
+      )?.href || null;
 
-  if (!data.id || !approvalUrl) {
+  if (
+    !data.id ||
+    !approvalUrl
+  ) {
     return json(
       {
         error:
-          "PayPal returned an incomplete order."
+          "PayPal devolveu uma assinatura incompleta."
       },
       502
     );
   }
 
+  const timestamp =
+    nowSeconds();
+
   await env.DB.prepare(
-    "INSERT INTO paypal_orders " +
-    "(firebase_uid, order_id, plan_id, amount, " +
-    "currency, status, created_at) " +
-    "VALUES (?, ?, 'PRO', ?, 'USD', 'CREATED', ?)"
+    "INSERT INTO paypal_subscriptions (" +
+    "firebase_uid, subscription_id, plan_id, " +
+    "paypal_plan_id, status, created_at, " +
+    "updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
   )
     .bind(
       user.uid,
       data.id,
-      amount,
-      nowSeconds()
+      planId,
+      paypalPlanId,
+      data.status ||
+        "APPROVAL_PENDING",
+      timestamp,
+      timestamp
     )
     .run();
 
   return json({
     ok: true,
-    orderId: data.id,
+    subscriptionId:
+      data.id,
     approvalUrl,
-    plan: "PRO",
-    amount,
-    currency: "USD",
-    durationDays
+    plan:
+      planId,
+    amount:
+      Number(
+        plan.price_usd
+      ),
+    currency:
+      "USD",
+    billingInterval:
+      plan.billing_interval
   });
 }
 
-function captureAmountMatches(
-  data,
-  expectedAmount
+async function getPayPalSubscription(
+  env,
+  accessToken,
+  subscriptionId
 ) {
-  const unit =
-    data?.purchase_units?.[0];
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+      "/v1/billing/subscriptions/" +
+      encodeURIComponent(
+        subscriptionId
+      ),
+      {
+        method: "GET",
+        headers: {
+          authorization:
+            "Bearer " +
+            accessToken,
+          accept:
+            "application/json"
+        }
+      }
+    );
 
-  const capture =
-    unit?.payments?.captures?.[0];
+  const data =
+    await response.json();
 
-  if (!capture) {
-    return false;
+  if (!response.ok) {
+    console.error(
+      "PayPal subscription details failed",
+      response.status,
+      data
+    );
+
+    throw new Error(
+      "Não foi possível verificar a assinatura no PayPal."
+    );
   }
 
-  if (capture.status !== "COMPLETED") {
-    return false;
+  return data;
+}
+
+async function activatePayPalSubscription(
+  env,
+  accessToken,
+  subscriptionId
+) {
+  const response =
+    await fetch(
+      paypalBaseUrl(env) +
+      "/v1/billing/subscriptions/" +
+      encodeURIComponent(
+        subscriptionId
+      ) +
+      "/activate",
+      {
+        method: "POST",
+        headers: {
+          authorization:
+            "Bearer " +
+            accessToken,
+          "content-type":
+            "application/json",
+          accept:
+            "application/json"
+        },
+        body:
+          JSON.stringify({
+            reason:
+              "Customer approved the Audio Tools subscription."
+          })
+      }
+    );
+
+  if (
+    response.status === 204 ||
+    response.ok
+  ) {
+    return;
   }
 
-  const amount =
-    capture.amount || {};
+  const data =
+    await response.json()
+      .catch(() => ({}));
 
-  return (
-    amount.currency_code === "USD" &&
-    Number(amount.value).toFixed(2) ===
-      expectedAmount
+  throw new Error(
+    data?.details?.[0]
+      ?.description ||
+    data?.message ||
+    "Não foi possível ativar a assinatura."
   );
 }
 
-async function capturePayPalOrder(
+async function activateSubscription(
   request,
   env,
   user
 ) {
-  const body = await request
-    .json()
-    .catch(() => ({}));
+  const body =
+    await request
+      .json()
+      .catch(() => ({}));
 
-  const orderId =
-    typeof body.orderId === "string"
-      ? body.orderId.trim()
+  const subscriptionId =
+    typeof body.subscriptionId ===
+    "string"
+      ? body.subscriptionId
+          .trim()
       : "";
 
-  if (!orderId) {
+  if (!subscriptionId) {
     return json(
-      { error: "orderId is required." },
+      {
+        error:
+          "subscriptionId is required."
+      },
       400
     );
   }
 
-  const order = await env.DB.prepare(
-    "SELECT * FROM paypal_orders " +
-    "WHERE order_id = ? AND firebase_uid = ?"
-  )
-    .bind(orderId, user.uid)
-    .first();
+  const local =
+    await env.DB.prepare(
+      "SELECT * FROM paypal_subscriptions " +
+      "WHERE subscription_id = ? " +
+      "AND firebase_uid = ?"
+    )
+      .bind(
+        subscriptionId,
+        user.uid
+      )
+      .first();
 
-  if (!order) {
+  if (!local) {
     return json(
-      { error: "PayPal order not found." },
+      {
+        error:
+          "Assinatura não encontrada para esta conta."
+      },
       404
     );
   }
 
-  const entitlement =
-    await ensureEntitlement(
-      env.DB,
-      user.uid
-    );
-
-  if (order.status === "COMPLETED") {
-    return json({
-      ok: true,
-      alreadyCaptured: true,
-      plan: entitlement.plan,
-      expiresAt:
-        Number(entitlement.expires_at || 0)
-    });
-  }
-
   const accessToken =
-    await getPayPalAccessToken(env);
-
-  const response = await fetch(
-    paypalBaseUrl(env) +
-      "/v2/checkout/orders/" +
-      encodeURIComponent(orderId) +
-      "/capture",
-    {
-      method: "POST",
-      headers: {
-        authorization:
-          "Bearer " + accessToken,
-        "content-type":
-          "application/json",
-        accept: "application/json",
-        "paypal-request-id":
-          "capture-" +
-          crypto.randomUUID()
-      },
-      body: "{}"
-    }
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error(
-      "PayPal capture failed",
-      response.status
+    await getPayPalAccessToken(
+      env
     );
 
+  let subscription =
+    await getPayPalSubscription(
+      env,
+      accessToken,
+      subscriptionId
+    );
+
+  if (
+    subscription.plan_id !==
+    local.paypal_plan_id
+  ) {
     return json(
       {
         error:
-          "PayPal could not capture the order."
+          "A assinatura não corresponde ao plano solicitado."
       },
-      502
-    );
-  }
-
-  const expectedAmount =
-    Number(order.amount).toFixed(2);
-
-  if (
-    !captureAmountMatches(
-      data,
-      expectedAmount
-    )
-  ) {
-    return json(
-      { error: "Payment validation failed." },
       400
     );
   }
 
-  const now = nowSeconds();
-  const existingExpiry =
-    Number(entitlement.expires_at || 0);
+  if (
+    subscription.status ===
+    "APPROVED"
+  ) {
+    try {
+      await activatePayPalSubscription(
+        env,
+        accessToken,
+        subscriptionId
+      );
 
-  const base =
-    Math.max(now, existingExpiry);
+      subscription =
+        await getPayPalSubscription(
+          env,
+          accessToken,
+          subscriptionId
+        );
+    } catch (error) {
+      console.error(
+        "PayPal activation failed",
+        error
+      );
 
-  const expiresAt =
-    base +
-    proDurationDays(env) * 86400;
+      if (
+        subscription.status !==
+        "ACTIVE"
+      ) {
+        return json(
+          {
+            error:
+              "PayPal ainda não ativou a assinatura.",
+            details:
+              error.message
+          },
+          502
+        );
+      }
+    }
+  }
 
-  await env.DB.batch([
-    env.DB.prepare(
-      "UPDATE paypal_orders SET " +
-      "status = 'COMPLETED', captured_at = ? " +
-      "WHERE order_id = ? AND firebase_uid = ?"
-    )
-      .bind(now, orderId, user.uid),
+  const entitlement =
+    await updateEntitlementFromSubscription(
+      env.DB,
+      user.uid,
+      subscription
+    );
 
-    env.DB.prepare(
-      "UPDATE entitlements SET " +
-      "plan = 'PRO', starts_at = ?, " +
-      "expires_at = ?, status = 'ACTIVE', " +
-      "source = 'PAYPAL', updated_at = ?, " +
-      "last_order_id = ? " +
-      "WHERE firebase_uid = ?"
-    )
-      .bind(
-        now,
-        expiresAt,
-        now,
-        orderId,
-        user.uid
-      )
-  ]);
+  if (!entitlement) {
+    return json(
+      {
+        error:
+          "Não foi possível atualizar o acesso."
+      },
+      500
+    );
+  }
+
+  if (
+    entitlement.plan !==
+    local.plan_id
+  ) {
+    return json(
+      {
+        error:
+          "Pagamento ainda não está ativo.",
+        status:
+          subscription.status
+      },
+      409
+    );
+  }
 
   return json({
     ok: true,
-    plan: "PRO",
-    expiresAt
+    plan:
+      entitlement.plan,
+    status:
+      entitlement.status,
+    expiresAt:
+      entitlement.expires_at
+        ? Number(
+            entitlement.expires_at
+          )
+        : null,
+    subscriptionId:
+      subscriptionId
   });
 }
 
 async function entitlement(
-  request,
   env,
   user
 ) {
-  const current =
+  let current =
     await ensureEntitlement(
       env.DB,
       user.uid
     );
 
-  let plan = current.plan || "FREE";
-  let expiresAt =
-    Number(current.expires_at || 0);
-  let status =
-    current.status || "ACTIVE";
+  const now =
+    nowSeconds();
 
   if (
-    plan === "PRO" &&
-    expiresAt > 0 &&
-    expiresAt <= nowSeconds()
+    current.plan !== "FREE" &&
+    current.expires_at &&
+    Number(
+      current.expires_at
+    ) <= now
   ) {
-    plan = "FREE";
-    expiresAt = 0;
-    status = "ACTIVE";
-
     await env.DB.prepare(
       "UPDATE entitlements SET " +
-      "plan = 'FREE', expires_at = NULL, " +
-      "status = 'ACTIVE', updated_at = ? " +
+      "plan = 'FREE', starts_at = NULL, " +
+      "expires_at = NULL, status = 'ACTIVE', " +
+      "source = 'SYSTEM', updated_at = ? " +
       "WHERE firebase_uid = ?"
     )
-      .bind(nowSeconds(), user.uid)
+      .bind(
+        now,
+        user.uid
+      )
       .run();
   }
 
+  current =
+    await syncUserSubscription(
+      env.DB,
+      env,
+      user.uid
+    );
+
   return json({
     ok: true,
-    plan,
-    isPro: plan === "PRO" &&
-      status === "ACTIVE",
-    expiresAt: expiresAt || null
+    plan:
+      current.plan ||
+      "FREE",
+    isPro:
+      hasPlanAccess(
+        current.plan ||
+          "FREE",
+        "PRO"
+      ) &&
+      current.status ===
+        "ACTIVE",
+    isPremium:
+      hasPlanAccess(
+        current.plan ||
+          "FREE",
+        "PREMIUM"
+      ) &&
+      current.status ===
+        "ACTIVE",
+    expiresAt:
+      current.expires_at
+        ? Number(
+            current.expires_at
+          )
+        : null,
+    subscriptionId:
+      current.last_subscription_id ||
+      null
   });
 }
 
-function plans(env) {
-  return json({
-    ok: true,
-    plans: [
-      {
-        id: "FREE",
-        name: "Free",
-        priceUsd: 0,
-        durationDays: null
-      },
-      {
-        id: "PRO",
-        name: "Pro",
-        priceUsd:
-          Number(proPrice(env)),
-        durationDays:
-          proDurationDays(env)
-      }
-    ]
-  });
-}
+function returnPage(
+  request
+) {
+  const url =
+    new URL(request.url);
 
-function returnPage(request) {
-  const url = new URL(request.url);
-  const token =
-    url.searchParams.get("token") || "";
+  const subscriptionId =
+    url.searchParams.get(
+      "subscription_id"
+    ) ||
+    url.searchParams.get(
+      "token"
+    ) ||
+    "";
 
-  const safeToken =
-    token.replace(
+  const safeId =
+    subscriptionId.replace(
       /[^a-zA-Z0-9_-]/g,
       ""
     );
 
   const deepLink =
-    "audiotools://paypal/complete?token=" +
-    encodeURIComponent(safeToken);
+    "audiotools://paypal/complete" +
+    "?subscription_id=" +
+    encodeURIComponent(
+      safeId
+    );
 
-  const returnLink = safeToken
-    ? "<p><a href='" +
-      deepLink +
-      "' style='display:inline-block;" +
-      "padding:14px 18px;border-radius:12px;" +
-      "background:#2F6BFF;color:#fff;" +
-      "text-decoration:none'>" +
-      "Voltar ao Audio Tools</a></p>"
-    : "<p>Pedido não identificado.</p>";
+  const returnLink =
+    safeId
+      ? "<p><a href='" +
+        deepLink +
+        "' style='display:inline-block;" +
+        "padding:14px 18px;border-radius:12px;" +
+        "background:#2F6BFF;color:#fff;" +
+        "text-decoration:none'>" +
+        "Voltar ao Audio Tools</a></p>"
+      : "<p>Assinatura não identificada.</p>";
 
   return html(
-    "<!doctype html><html><head>" +
+    "<!doctype html>" +
+    "<html><head>" +
     "<meta charset='utf-8'>" +
     "<meta name='viewport' " +
     "content='width=device-width,initial-scale=1'>" +
-    "<title>Audio Tools Pro</title>" +
+    "<title>Audio Tools</title>" +
     "</head><body style='" +
     "font-family:system-ui;padding:32px;" +
     "max-width:560px;margin:auto'>" +
-    "<h1>Pagamento aprovado</h1>" +
-    "<p>Volta ao Audio Tools para terminar " +
-    "a ativação do Pro.</p>" +
+    "<h1>Pagamento recebido</h1>" +
+    "<p>Volta ao Audio Tools para concluir " +
+    "a ativação do teu plano.</p>" +
     returnLink +
     "</body></html>"
   );
@@ -1004,52 +2034,68 @@ function returnPage(request) {
 
 function cancelPage() {
   return html(
-    "<!doctype html><html><head>" +
+    "<!doctype html>" +
+    "<html><head>" +
     "<meta charset='utf-8'>" +
     "<meta name='viewport' " +
     "content='width=device-width,initial-scale=1'>" +
-    "<title>Audio Tools Pro</title>" +
+    "<title>Audio Tools</title>" +
     "</head><body style='" +
     "font-family:system-ui;padding:32px;" +
     "max-width:560px;margin:auto'>" +
-    "<h1>Pagamento cancelado</h1>" +
-    "<p>Nenhuma compra foi confirmada.</p>" +
+    "<h1>Assinatura cancelada</h1>" +
+    "<p>Nenhuma nova assinatura foi ativada.</p>" +
     "</body></html>"
   );
 }
 
 export default {
   async fetch(request, env) {
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders()
-      });
+    if (
+      request.method ===
+      "OPTIONS"
+    ) {
+      return new Response(
+        null,
+        {
+          status: 204,
+          headers:
+            corsHeaders()
+        }
+      );
     }
 
-    const url = new URL(request.url);
+    const url =
+      new URL(request.url);
 
     try {
+      await ensureDatabaseSchema(
+        env.DB
+      );
+
       if (
         request.method === "GET" &&
         url.pathname === "/"
       ) {
         return json({
           ok: true,
-          service: "audio-tools",
+          service:
+            "audio-tools",
           environment:
             env.PAYPAL_ENVIRONMENT ||
             "sandbox",
-          version: "1"
+          version: "3",
+          billing:
+            "subscriptions"
         });
       }
 
       if (
         request.method === "GET" &&
-        url.pathname === "/api/plans"
+        url.pathname ===
+          "/api/plans"
       ) {
-        await ensureDatabaseSchema(env.DB);
-        return plans(env);
+        return listPlans(env);
       }
 
       if (
@@ -1057,7 +2103,9 @@ export default {
         url.pathname ===
           "/api/paypal/return"
       ) {
-        return returnPage(request);
+        return returnPage(
+          request
+        );
       }
 
       if (
@@ -1069,9 +2117,10 @@ export default {
       }
 
       const user =
-        await requireUser(request, env);
-
-      await ensureDatabaseSchema(env.DB);
+        await requireUser(
+          request,
+          env
+        );
 
       if (
         request.method === "GET" &&
@@ -1079,6 +2128,17 @@ export default {
           "/api/entitlement"
       ) {
         return entitlement(
+          env,
+          user
+        );
+      }
+
+      if (
+        request.method === "POST" &&
+        url.pathname ===
+          "/api/paypal/create-subscription"
+      ) {
+        return createPayPalSubscription(
           request,
           env,
           user
@@ -1088,21 +2148,9 @@ export default {
       if (
         request.method === "POST" &&
         url.pathname ===
-          "/api/paypal/create-order"
+          "/api/paypal/activate-subscription"
       ) {
-        return createPayPalOrder(
-          request,
-          env,
-          user
-        );
-      }
-
-      if (
-        request.method === "POST" &&
-        url.pathname ===
-          "/api/paypal/capture-order"
-      ) {
-        return capturePayPalOrder(
+        return activateSubscription(
           request,
           env,
           user
@@ -1110,11 +2158,16 @@ export default {
       }
 
       return json(
-        { error: "Not found." },
+        {
+          error:
+            "Not found."
+        },
         404
       );
     } catch (error) {
-      if (error instanceof Response) {
+      if (
+        error instanceof Response
+      ) {
         return error;
       }
 
@@ -1124,7 +2177,11 @@ export default {
       );
 
       return json(
-        { error: "Internal server error." },
+        {
+          error:
+            error?.message ||
+            "Internal server error."
+        },
         500
       );
     }
