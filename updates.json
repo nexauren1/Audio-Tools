@@ -1,11 +1,11 @@
 {
-  "version": "0.6.5",
+  "version": "0.6.6",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.5-firebase-init-diagnostics",
-      "title": "Diagnóstico da configuração Firebase",
-      "description": "A inicialização do Firebase agora identifica e mostra a causa técnica real quando a configuração da versão não pode ser carregada."
+      "id": "v0.6.6-firebase-error-details",
+      "title": "Erro Firebase identificado",
+      "description": "Falhas de configuração ou autorização do Firebase agora mostram o código e o detalhe técnico real."
     }
   ]
 }

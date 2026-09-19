@@ -512,11 +512,11 @@ class AuthActivity : ComponentActivity() {
                 code == "ERROR_API_KEY_INVALID" ||
                 code == "ERROR_API_KEY_SERVICE_BLOCKED" ||
                 message.contains("API key", ignoreCase = true) ->
-                AuthStrings.t(this, "auth_invalid_config")
+                firebaseAuthDiagnostic(error, code, message)
             code == "ERROR_APP_NOT_AUTHORIZED" ||
                 code == "ERROR_INVALID_APP_CREDENTIAL" ||
                 message.contains("authorized", ignoreCase = true) ->
-                AuthStrings.t(this, "auth_app_not_authorized")
+                firebaseAuthDiagnostic(error, code, message)
             code == "ERROR_TOO_MANY_REQUESTS" ||
                 message.contains("TOO_MANY_ATTEMPTS", ignoreCase = true) ->
                 AuthStrings.t(this, "auth_too_many")
@@ -540,6 +540,37 @@ class AuthActivity : ComponentActivity() {
             }
         }
     }
+    private fun firebaseAuthDiagnostic(
+        error: Throwable?,
+        code: String,
+        message: String
+    ): String {
+        val safeCode = code.ifBlank { "AUTH_CONFIG_ERROR" }
+        val safeMessage = message
+            .replace("\\s+".toRegex(), " ")
+            .take(220)
+
+        Log.e(
+            "AuthActivity",
+            "Firebase configuration/auth diagnostic. " +
+                "type=" + error?.javaClass?.name +
+                " code=" + safeCode +
+                " message=" + safeMessage,
+            error
+        )
+
+        return buildString {
+            append("Firebase não aceitou a configuração da app.")
+            append("\nCódigo: ")
+            append(safeCode)
+
+            if (safeMessage.isNotBlank()) {
+                append("\nDetalhe: ")
+                append(safeMessage)
+            }
+        }
+    }
+
     private fun setLoading(loading: Boolean) {
         submitButton.isEnabled = !loading
         switchButton.isEnabled = !loading
