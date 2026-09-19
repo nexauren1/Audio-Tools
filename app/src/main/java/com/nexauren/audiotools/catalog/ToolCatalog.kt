@@ -5,6 +5,7 @@ data class AudioTool(
     val number: String,
     val title: String,
     val description: String,
+    val detail: String,
     val input: String,
     val output: String,
     val category: String,
@@ -13,20 +14,51 @@ data class AudioTool(
 
 object ToolCatalog {
     val tools = listOf(
-        AudioTool("cut","01","Cortar áudio","Escolha início e fim, pré-visualize e prepare o trecho para exportação.","MP3, WAV, AAC, FLAC, OGG, M4A","Formato escolhido","Edição",listOf("Escolha um ficheiro","Defina início e fim","Pré-visualize e exporte")),
-        AudioTool("join","02","Juntar áudio","Una vários ficheiros, altere a ordem e prepare transições suaves.","MP3, WAV, AAC, FLAC, OGG, M4A","Um ficheiro final","Edição",listOf("Adicione vários ficheiros","Reordene e ajuste volumes","Exporte a sequência")),
-        AudioTool("convert","03","Converter áudio","Converta formatos e prepare a qualidade de saída para diferentes usos.","MP3, WAV, AAC, FLAC, OGG, M4A","MP3, WAV, AAC, FLAC, OGG, M4A","Conversão",listOf("Escolha o áudio","Selecione formato e qualidade","Gere o novo ficheiro")),
-        AudioTool("extract","04","Extrair áudio de vídeo","Retire a faixa de áudio de vídeos guardados no dispositivo.","Vídeos suportados pelo Android","Áudio em formato escolhido","Vídeo",listOf("Escolha um vídeo","Selecione o formato","Exporte o áudio")),
-        AudioTool("compress","05","Comprimir áudio","Reduza o tamanho do ficheiro equilibrando espaço e qualidade.","Áudio suportado","Ficheiro otimizado","Otimização",listOf("Escolha o áudio","Defina a compressão","Compare e exporte")),
-        AudioTool("speed","06","Alterar velocidade","Acelere ou abrande o áudio com controlo fino e opção de preservar o tom.","Áudio suportado","Áudio processado","Edição",listOf("Escolha o áudio","Defina a velocidade","Pré-visualize e exporte")),
-        AudioTool("pitch","07","Alterar tom","Ajuste o tom do áudio em semitons.","Áudio suportado","Áudio processado","Edição",listOf("Escolha o áudio","Ajuste o tom","Pré-visualize e exporte")),
-        AudioTool("normalize","08","Normalizar volume","Equilibre níveis de volume para uma reprodução mais consistente.","Áudio suportado","Áudio normalizado","Otimização",listOf("Escolha o áudio","Analise o nível","Aplique e exporte")),
-        AudioTool("recorder","09","Gravador","Grave voz e ideias rapidamente com pausa, retomada e histórico local.","Microfone","Gravação de áudio","Gravação",listOf("Conceda acesso ao microfone","Grave e pause","Guarde a gravação")),
-        AudioTool("editor","10","Editor de áudio","Área de edição com waveform, seleção, corte, silêncio e desfazer.","Áudio suportado","Projeto e áudio exportado","Edição avançada",listOf("Carregue o áudio","Edite a seleção","Aplique e exporte")),
-        AudioTool("metadata","11","Editor de metadados","Edite título, artista, álbum, género, ano, faixa e capa.","MP3, M4A e compatíveis","Ficheiro com metadados","Biblioteca",listOf("Escolha o ficheiro","Edite os campos","Guarde uma nova versão")),
-        AudioTool("mixer","12","Misturador de áudio","Combine várias faixas com volume individual, fades e organização.","Várias faixas","Uma mistura final","Edição avançada",listOf("Adicione as faixas","Ajuste níveis","Faça o mix e exporte")),
-        AudioTool("silence","13","Remover silêncios","Detete intervalos de silêncio e prepare uma versão mais contínua.","Áudio suportado","Áudio processado","Otimização",listOf("Escolha o áudio","Defina o limite","Reveja e exporte")),
-        AudioTool("analyzer","14","Analisar áudio","Veja duração, picos, propriedades e indicadores úteis.","Áudio suportado","Relatório de análise","Análise",listOf("Escolha o áudio","Analise as propriedades","Consulte o relatório"))
+        AudioTool(
+            id = "cut",
+            number = "01",
+            title = "Cortar áudio",
+            description = "Escolhe um intervalo e cria um novo ficheiro com apenas o trecho que precisas.",
+            detail = "Feito para cortes rápidos sem sair do telemóvel. A V1 exporta áudio AAC/M4A para uma nova cópia.",
+            input = "M4A / MP4 com áudio AAC",
+            output = "M4A",
+            category = "Edição",
+            steps = listOf(
+                "Escolhe o ficheiro de áudio",
+                "Define o início e o fim em segundos",
+                "Exporta o trecho como uma nova cópia"
+            )
+        ),
+        AudioTool(
+            id = "recorder",
+            number = "02",
+            title = "Gravador",
+            description = "Grava voz, ideias e takes com um toque e guarda tudo localmente.",
+            detail = "A gravação usa o microfone do dispositivo e fica disponível imediatamente para reprodução.",
+            input = "Microfone do dispositivo",
+            output = "M4A / AAC",
+            category = "Gravação",
+            steps = listOf(
+                "Concede acesso ao microfone",
+                "Começa e termina a gravação",
+                "Reproduz o take guardado"
+            )
+        ),
+        AudioTool(
+            id = "analyzer",
+            number = "03",
+            title = "Analisar áudio",
+            description = "Consulta duração, formato, bitrate, canais e taxa de amostragem do ficheiro.",
+            detail = "Uma leitura rápida das propriedades do áudio, sem enviar o ficheiro para a internet.",
+            input = "Ficheiro de áudio compatível com Android",
+            output = "Relatório técnico no ecrã",
+            category = "Análise",
+            steps = listOf(
+                "Escolhe um ficheiro",
+                "A aplicação lê as propriedades",
+                "Consulta o resumo técnico"
+            )
+        )
     )
 
     fun get(id: String): AudioTool? = tools.firstOrNull { it.id == id }
