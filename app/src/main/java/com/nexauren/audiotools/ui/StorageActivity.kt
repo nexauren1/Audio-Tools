@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.storage.NexaurenStorage
 
 class StorageActivity : ComponentActivity() {
