@@ -88,6 +88,7 @@ class ToolDetailActivity : ComponentActivity() {
     private var convertTarget = "m4a"
     private var convertTargetRow: LinearLayout? = null
     private var pendingPreviewPath: String? = null
+    private var pendingPreviewName: String? = null
     private var previewStartMs = 0L
     private var previewEndMs = 0L
     private var previewStopRunnable: Runnable? = null
@@ -369,12 +370,16 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(ViewKit.spacer(this, 7))
         content.addView(primaryAction)
 
-        playbackAction = ViewKit.button(this, "▶", false, R.color.audio_purple).apply {
+        playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_result"), false, R.color.audio_purple).apply {
             visibility = MaterialButton.GONE
-            setOnClickListener { lastOutputPath?.let { playFile(File(it)) } }
+            setOnClickListener { pendingPreviewPath?.let { playFile(File(it)) } ?: lastOutputPath?.let { playFile(File(it)) } }
         }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(playbackAction)
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(ViewKit.button(this, AppStrings.t(this, "save_result"), false, R.color.audio_purple).apply {
+            setOnClickListener { savePendingResult() }
+        })
 
         card.addView(content)
         root.addView(card)
