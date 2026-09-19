@@ -53,6 +53,20 @@ jobs:
           test -s audio-tools-release.jks
           keytool -list -keystore audio-tools-release.jks -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
 
+      - name: Create temporary signing properties
+        if: github.event_name != 'pull_request'
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          printf '%s\n' \
+            "storeFile=$GITHUB_WORKSPACE/audio-tools-release.jks" \
+            "storePassword=$ANDROID_KEYSTORE_PASSWORD" \
+            "keyAlias=$ANDROID_KEY_ALIAS" \
+            "keyPassword=$ANDROID_KEY_PASSWORD" \
+            > keystore.properties
+          chmod 600 keystore.properties
       - name: Build installable debug APK
         if: github.event_name == 'pull_request'
         run: gradle assembleDebug --stacktrace
