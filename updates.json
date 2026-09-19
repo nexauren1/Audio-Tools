@@ -1,11 +1,11 @@
 {
-  "version": "0.6.6",
+  "version": "0.6.7",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.6-firebase-error-details",
-      "title": "Erro Firebase identificado",
-      "description": "Falhas de configuração ou autorização do Firebase agora mostram o código e o detalhe técnico real."
+      "id": "v0.6.7-firebase-account-hardening",
+      "title": "Contas Firebase reforçadas",
+      "description": "O fluxo de contas passou a centralizar erros Firebase, tratar falhas de perfil sem bloquear a sessão e manter debug e release compatíveis com o mesmo app Android."
     }
   ]
 }

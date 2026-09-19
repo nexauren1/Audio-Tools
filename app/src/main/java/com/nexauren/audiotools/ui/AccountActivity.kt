@@ -143,7 +143,10 @@ class AccountActivity : ComponentActivity() {
                             if (task.isSuccessful) {
                                 AuthStrings.t(this@AccountActivity, "reset_sent")
                             } else {
-                                AuthStrings.t(this@AccountActivity, "auth_generic")
+                                FirebaseSupport.authError(
+                                    this@AccountActivity,
+                                    task.exception
+                                )
                             },
                             Toast.LENGTH_LONG
                         ).show()
