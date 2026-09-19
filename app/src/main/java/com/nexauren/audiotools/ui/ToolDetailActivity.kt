@@ -751,16 +751,16 @@ class ToolDetailActivity : ComponentActivity() {
         worker.execute {
             try {
                 val sourceName = displayName(uri).substringBeforeLast('.').ifBlank { "audio" }
-                val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
-                val output = File(outputDir, sourceName + "_converted_" + System.currentTimeMillis() + "." + target)
+                val output = File(cacheDir, sourceName + "_converted_preview_" + System.currentTimeMillis() + "." + target)
                 if (target == "m4a") wavToM4a(uri, output) else m4aToWav(uri, output)
-                lastOutputPath = output.absolutePath
+                pendingPreviewPath = output.absolutePath
+                pendingPreviewName = sourceName + "_converted." + target
                 mainHandler.post {
                     progress.visibility = View.GONE
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "converted") + " • " + output.name
-                    playbackAction?.text = if (LanguageManager.get(this@ToolDetailActivity) == "pt") "▶ Reproduzir resultado" else "▶ Play result"
+                    playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
+                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "preview_ready") + " • " + output.name
                 }
             } catch (_: Exception) {
                 mainHandler.post {
@@ -898,6 +898,26 @@ class ToolDetailActivity : ComponentActivity() {
             try { muxer?.release() } catch (_: Exception) {}
         }
         require(output.exists() && output.length() > 0L)
+    }
+
+    private fun savePendingResult() {
+        val source = pendingPreviewPath?.let { File(it) } ?: return
+        if (!source.exists()) return
+        worker.execute {
+            try {
+                val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
+                val target = File(dir, pendingPreviewName ?: source.name)
+                source.inputStream().use { input ->
+                    target.outputStream().use { output -> input.copyTo(output) }
+                }
+                lastOutputPath = target.absolutePath
+                mainHandler.post {
+                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "saved_result") + " • " + target.name
+                }
+            } catch (_: Exception) {
+                mainHandler.post { statusView?.text = AppStrings.t(this@ToolDetailActivity, "save_error") }
+            }
+        }
     }
 
     private fun m4aToWav(uri: Uri, output: File) {
