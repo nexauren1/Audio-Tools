@@ -12,7 +12,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -48,8 +47,8 @@ class ProDemoActivity : ComponentActivity() {
         com.google.android.material.button.MaterialButton? =
         null
 
-    private var progress:
-        ProgressBar? = null
+    private var processing:
+        CircuitProgressView? = null
 
     private var selectedUri:
         Uri? = null
@@ -313,13 +312,21 @@ class ProDemoActivity : ComponentActivity() {
 
         content.addView(status)
 
-        progress =
-            ProgressBar(this).apply {
-                visibility =
-                    View.GONE
+        processing =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ProDemoActivity,
+                            58
+                        )
+                    )
             }
 
-        content.addView(progress)
+        content.addView(
+            processing
+        )
 
         content.addView(
             ViewKit.spacer(
@@ -471,10 +478,6 @@ class ProDemoActivity : ComponentActivity() {
                             )
                         action?.isEnabled =
                             true
-                        UsageStore.record(
-                            this@ProDemoActivity,
-                            "pro-inspector"
-                        )
                     } else {
                         openUpgrade()
                     }
@@ -528,8 +531,7 @@ class ProDemoActivity : ComponentActivity() {
     ) {
         selectedUri = uri
 
-        progress?.visibility =
-            View.VISIBLE
+        processing?.start()
 
         action?.isEnabled =
             false
@@ -543,19 +545,22 @@ class ProDemoActivity : ComponentActivity() {
                     buildReport(uri)
 
                 mainHandler.post {
-                    progress?.visibility =
-                        View.GONE
+                    processing?.stop()
 
                     action?.isEnabled =
                         true
+
+                    UsageStore.record(
+                        this@ProDemoActivity,
+                        "pro-inspector"
+                    )
 
                     status?.text =
                         report
                 }
             } catch (error: Exception) {
                 mainHandler.post {
-                    progress?.visibility =
-                        View.GONE
+                    processing?.stop()
 
                     action?.isEnabled =
                         true
