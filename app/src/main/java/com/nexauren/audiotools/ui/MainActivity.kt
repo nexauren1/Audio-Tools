@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        status.addView(metric("4", AppStrings.t(this, "active"), R.color.audio_blue))
+        status.addView(metric("5", AppStrings.t(this, "active"), R.color.audio_blue))
         status.addView(ViewKit.spacer(this, 12))
         status.addView(metric("100%", AppStrings.t(this, "local_processing"), R.color.audio_green))
         heroContent.addView(status)
