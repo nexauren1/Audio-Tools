@@ -45,6 +45,7 @@ jobs:
           grep -q "CREATE TABLE plans" cloudflare/schema.sql
           grep -q "CREATE TABLE entitlements" cloudflare/schema.sql
           grep -q "CREATE TABLE paypal_subscriptions" cloudflare/schema.sql
+          grep -q "CREATE TABLE support_requests" cloudflare/schema.sql
           ! grep -q "paypal_orders" cloudflare/schema.sql
           ! grep -q "credit_accounts" cloudflare/schema.sql
           ! grep -q "credit_transactions" cloudflare/schema.sql
