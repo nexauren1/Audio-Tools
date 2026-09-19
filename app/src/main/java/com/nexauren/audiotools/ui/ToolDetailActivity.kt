@@ -101,6 +101,7 @@ class ToolDetailActivity : ComponentActivity() {
             finish()
             return
         }
+        UsageStore.record(this, tool.id)
         buildUi(tool)
     }
 
@@ -133,7 +134,7 @@ class ToolDetailActivity : ComponentActivity() {
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
                 leftMargin = ViewKit.dp(this@ToolDetailActivity, 11)
             }
-            addView(ViewKit.eyebrow(this@ToolDetailActivity, copy.category))
+            addView(ViewKit.eyebrow(this@ToolDetailActivity, "AUDIO TOOL"))
             addView(TextView(this@ToolDetailActivity).apply {
                 text = "N° " + tool.number
                 textSize = 12f
@@ -199,12 +200,58 @@ class ToolDetailActivity : ComponentActivity() {
         specCard.addView(spec)
         root.addView(ViewKit.spacer(this, 10))
         root.addView(specCard)
-
-        setContentView(ScrollView(this).apply {
+\n        root.addView(ViewKit.spacer(this, 10))
+        root.addView(ViewKit.button(this, "Partilhar resultado", false, accent).apply {
+            setOnClickListener { shareLastResult() }
+        })
+\n        setContentView(ScrollView(this).apply {
             isFillViewport = true
             overScrollMode = ScrollView.OVER_SCROLL_NEVER
             addView(root)
         })
+    }
+
+    private fun shareLastResult() {
+        val path = lastOutputPath
+        if (path.isNullOrBlank()) {
+            android.widget.Toast.makeText(
+                this,
+                "Ainda não existe um resultado para partilhar.",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val file = File(path)
+        if (!file.exists()) {
+            android.widget.Toast.makeText(
+                this,
+                "O resultado já não está disponível neste dispositivo.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        runCatching {
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                this,
+                applicationContext.packageName + ".fileprovider",
+                file
+            )
+            startActivity(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "audio/*"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            )
+        }.onFailure {
+            android.widget.Toast.makeText(
+                this,
+                "Não foi possível abrir a partilha.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     private fun buildCutAction(root: LinearLayout) {
