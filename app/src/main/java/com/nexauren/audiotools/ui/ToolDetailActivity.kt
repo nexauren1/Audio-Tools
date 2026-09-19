@@ -85,6 +85,7 @@ class ToolDetailActivity : ComponentActivity() {
     private var trimStartInput: TextInputEditText? = null
     private var trimEndInput: TextInputEditText? = null
     private var convertTarget = "m4a"
+    private var convertTargetRow: LinearLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -229,8 +230,8 @@ class ToolDetailActivity : ComponentActivity() {
         trimView = WaveformTrimView(this).apply {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewKit.dp(this@ToolDetailActivity, 122))
             onRangeChanged = { start, end ->
-                trimStartInput?.setTextWithoutMovingCursor(formatSeconds(start), null)
-                trimEndInput?.setTextWithoutMovingCursor(formatSeconds(end), null)
+                setInputText(trimStartInput, formatSeconds(start))
+                setInputText(trimEndInput, formatSeconds(end))
             }
         }
         content.addView(trimView)
@@ -319,6 +320,7 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(ViewKit.spacer(this, 11))
 
         val targetRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        convertTargetRow = targetRow
         val wavButton = ViewKit.button(this, "WAV", false, R.color.audio_purple).apply {
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { rightMargin = ViewKit.dp(this@ToolDetailActivity, 7) }
             setOnClickListener { setConvertTarget("wav") }
@@ -365,13 +367,11 @@ class ToolDetailActivity : ComponentActivity() {
         // Keep references indirectly by updating button state from the target selector.
         wavButton.tag = "wav"
         m4aButton.tag = "m4a"
-        content.tag = targetRow
     }
 
     private fun setConvertTarget(target: String) {
         convertTarget = target
-        val row = primaryAction?.parent?.parent?.parent as? LinearLayout ?: return
-        val targetRow = row.tag as? LinearLayout ?: return
+        val targetRow = convertTargetRow ?: return
         val wav = targetRow.getChildAt(0) as? MaterialButton
         val m4a = targetRow.getChildAt(1) as? MaterialButton
         if (target == "wav") {
@@ -739,7 +739,7 @@ class ToolDetailActivity : ComponentActivity() {
 
     private fun m4aToWav(uri: Uri, output: File) {
         val extractor = MediaExtractor()
-        val decoder: MediaCodec
+        var decoder: MediaCodec? = null
         try {
             extractor.setDataSource(this, uri, null)
             var trackIndex = -1
@@ -755,8 +755,8 @@ class ToolDetailActivity : ComponentActivity() {
             require(trackIndex >= 0 && trackFormat != null)
             val mime = trackFormat!!.getString(MediaFormat.KEY_MIME) ?: error("no mime")
             decoder = MediaCodec.createDecoderByType(mime)
-            decoder.configure(trackFormat, null, null, 0)
-            decoder.start()
+            decoder!!.configure(trackFormat, null, null, 0)
+            decoder!!.start()
             extractor.selectTrack(trackIndex)
 
             RandomAccessFile(output, "rw").use { raf ->
@@ -812,8 +812,8 @@ class ToolDetailActivity : ComponentActivity() {
                 writeWavHeader(raf, dataBytes, sampleRate, channels)
             }
         } finally {
-            try { decoder.stop() } catch (_: Exception) {}
-            try { decoder.release() } catch (_: Exception) {}
+            try { decoder?.stop() } catch (_: Exception) {}
+            try { decoder?.release() } catch (_: Exception) {}
             extractor.release()
         }
     }
@@ -1094,6 +1094,6 @@ class ToolDetailActivity : ComponentActivity() {
     }
 }
 
-private fun TextInputEditText.setTextWithoutMovingCursor(value: String, unused: Nothing?) {
-    if (text?.toString() != value) setText(value)
+private fun setInputText(input: TextInputEditText?, value: String) {
+    if (input?.text?.toString() != value) input?.setText(value)
 }
