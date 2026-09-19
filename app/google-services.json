@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "261545373135",
-    "project_id": "audio-tools-a256e",
-    "storage_bucket": "audio-tools-a256e.firebasestorage.app"
+    "project_number": "1062503070204",
+    "project_id": "audio-tools-e725e",
+    "storage_bucket": "audio-tools-e725e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:261545373135:android:dc3a7288baa5f73406b6ba",
+        "mobilesdk_app_id": "1:1062503070204:android:5cbaf1f5a5d75a0236da79",
         "android_client_info": {
           "package_name": "com.nexauren.audiotools"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1062503070204-6mupivksk12bcs0al9nd5qe59naf1ua7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBfemtYT5XYWf2dLIhV2JmhhMFv5gv-1UE"
+          "current_key": "AIzaSyDz-JzXIZaDEPOtss4lOrbd2pV12kfiXDI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1062503070204-6mupivksk12bcs0al9nd5qe59naf1ua7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
