@@ -31,63 +31,37 @@ jobs:
         with:
           gradle-version: "9.7.1"
 
-      - name: Restore release signing key
+      - name: Configure optional release signing
         if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          test -n "$ANDROID_KEYSTORE_BASE64"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > audio-tools-release.jks
-          chmod 600 audio-tools-release.jks
-
-      - name: Verify signing configuration
-        if: github.event_name != 'pull_request'
-        env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
         run: |
-          test -n "$ANDROID_KEYSTORE_PASSWORD"
-          test -n "$ANDROID_KEY_ALIAS"
-          test -n "$ANDROID_KEY_PASSWORD"
-          test -s audio-tools-release.jks
-          keytool -list -keystore audio-tools-release.jks -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" >/dev/null
-
-      - name: Verify private key password
-        if: github.event_name != 'pull_request'
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          rm -f /tmp/audio-tools-signing-check.p12
-          keytool -importkeystore \
-            -srckeystore audio-tools-release.jks \
-            -srcstoretype JKS \
-            -srcstorepass "$ANDROID_KEYSTORE_PASSWORD" \
-            -srcalias "$ANDROID_KEY_ALIAS" \
-            -srckeypass "$ANDROID_KEY_PASSWORD" \
-            -destkeystore /tmp/audio-tools-signing-check.p12 \
-            -deststoretype PKCS12 \
-            -deststorepass verify-only \
-            -destkeypass verify-only \
-            -noprompt >/dev/null
-          rm -f /tmp/audio-tools-signing-check.p12
-
-      - name: Create temporary signing properties
-        if: github.event_name != 'pull_request'
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          printf '%s\n' \
-            "storeFile=$GITHUB_WORKSPACE/audio-tools-release.jks" \
-            "storePassword=$ANDROID_KEYSTORE_PASSWORD" \
-            "keyAlias=$ANDROID_KEY_ALIAS" \
-            "keyPassword=$ANDROID_KEY_PASSWORD" \
-            > keystore.properties
-          chmod 600 keystore.properties
+          set -euo pipefail
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" && \
+                -n "$ANDROID_KEYSTORE_PASSWORD" && \
+                -n "$ANDROID_KEY_ALIAS" && \
+                -n "$ANDROID_KEY_PASSWORD" ]]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > audio-tools-release.jks
+            chmod 600 audio-tools-release.jks
+            keytool -list \
+              -keystore audio-tools-release.jks \
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -alias "$ANDROID_KEY_ALIAS" >/dev/null
+            printf '%s\n' \
+              "storeFile=$GITHUB_WORKSPACE/audio-tools-release.jks" \
+              "storePassword=$ANDROID_KEYSTORE_PASSWORD" \
+              "keyAlias=$ANDROID_KEY_ALIAS" \
+              "keyPassword=$ANDROID_KEY_PASSWORD" \
+              > keystore.properties
+            chmod 600 keystore.properties
+            echo "Custom release signing configured."
+          else
+            echo "Release signing secrets are not configured; Gradle will use its debug signing fallback."
+          fi
       - name: Build installable debug APK
         if: github.event_name == 'pull_request'
         run: gradle assembleDebug --stacktrace
@@ -100,12 +74,33 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle assembleRelease --stacktrace
 
+      - name: Verify Firebase-generated Google OAuth resource
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          values_file="app/build/generated/res/google-services/release/values/values.xml"
+          test -f "$values_file"
+          grep -q 'default_web_client_id' "$values_file"
+          echo "Firebase google-services.json processed and default_web_client_id was generated."
+
+      - name: Print APK signing certificate
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$apksigner"
+          "$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk | tee APK_CERTIFICATE.txt
+
       - name: Upload APK artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: audio-tools-release
-          path: app/build/outputs/apk/release/app-release.apk
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            APK_CERTIFICATE.txt
           if-no-files-found: error
 
       - name: Prepare release tag
