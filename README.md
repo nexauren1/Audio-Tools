@@ -11,6 +11,12 @@ Base V0.1.0:
 - APK download and Android installer handoff.
 - GitHub Actions debug build.
 
+Firebase authentication:
+- Email/password registration and sign-in.
+- Google sign-in uses Android Credential Manager and the Web OAuth client generated from app/google-services.json.
+- The Android SHA-1 certificate must be registered in the Firebase project for the signing certificate used by the APK.
+- The GitHub build prints APK_CERTIFICATE.txt so the SHA-1 can be registered in Firebase when custom release signing is not configured.
+
 Architecture:
 - catalog: tool definitions and metadata.
 - ui: screens and reusable UI components.
