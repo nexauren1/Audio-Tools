@@ -425,9 +425,11 @@ class ToolDetailActivity : ComponentActivity() {
         primaryAction = ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Extract and save"; "fr" -> "Extraire et enregistrer"; "es" -> "Extraer y guardar"; "de" -> "Extrahieren und speichern"; else -> "Extrair e guardar" }, true, R.color.audio_green).apply { isEnabled = false; setOnClickListener { selectedUri?.let { performExtract(it, progress) } } }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(primaryAction)
-        playbackAction = ViewKit.button(this, if (LanguageManager.get(this) == "pt") "▶ Reproduzir resultado" else "▶ Play result", false, R.color.audio_green).apply { visibility = View.GONE; setOnClickListener { lastOutputPath?.let { playFile(File(it)) } } }
+        playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_result"), false, R.color.audio_green).apply { visibility = View.GONE; setOnClickListener { pendingPreviewPath?.let { playFile(File(it)) } ?: lastOutputPath?.let { playFile(File(it)) } } }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(playbackAction)
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(ViewKit.button(this, AppStrings.t(this, "save_result"), false, R.color.audio_green).apply { setOnClickListener { savePendingResult() } })
         card.addView(content)
         root.addView(card)
     }
@@ -674,13 +676,15 @@ class ToolDetailActivity : ComponentActivity() {
             try {
                 val sourceName = displayName(uri).substringBeforeLast(".").ifBlank { "video" }
                 val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
-                val output = File(dir, sourceName + "_audio_" + System.currentTimeMillis() + ".m4a")
+                val output = File(cacheDir, sourceName + "_audio_preview_" + System.currentTimeMillis() + ".m4a")
                 extractAac(uri, output)
-                lastOutputPath = output.absolutePath
+                pendingPreviewPath = output.absolutePath
+                pendingPreviewName = sourceName + "_audio.m4a"
                 mainHandler.post {
                     progress.visibility = View.GONE
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
+                    playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
                     statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
                         "en" -> "Extraction complete"
                         "fr" -> "Extraction terminée"
