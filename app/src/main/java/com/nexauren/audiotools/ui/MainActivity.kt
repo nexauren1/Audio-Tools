@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
         searchInput = EditText(this).apply {
             hint = if (LanguageManager.get(this@MainActivity) == "pt") "Pesquisar ferramentas…" else "Search tools…"
-            singleLine = true
+            isSingleLine = true
             textSize = 14f
             setPadding(ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12))
             background = GradientDrawable().apply {
@@ -329,7 +329,7 @@ class MainActivity : ComponentActivity() {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(ViewKit.dp(this, 14), ViewKit.dp(this, 12), ViewKit.dp(this, 14), ViewKit.dp(this, 12))
+            setPadding(ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12), ViewKit.dp(this@MainActivity, 14), ViewKit.dp(this@MainActivity, 12))
         }
         row.addView(ViewKit.iconBadge(this, "✓", R.color.audio_green).apply {
             layoutParams = LinearLayout.LayoutParams(ViewKit.dp(this@MainActivity, 40), ViewKit.dp(this@MainActivity, 40)).apply { rightMargin = ViewKit.dp(this@MainActivity, 10) }
@@ -354,6 +354,7 @@ class MainActivity : ComponentActivity() {
     private fun toolAccent(toolId: String): Int = when (toolId) {
         "cut" -> R.color.audio_blue
         "convert" -> R.color.audio_purple
+        "extract" -> R.color.audio_green
         "recorder" -> R.color.audio_red
         "analyzer" -> R.color.audio_yellow
         else -> R.color.audio_blue
@@ -362,6 +363,7 @@ class MainActivity : ComponentActivity() {
     private fun toolSymbol(toolId: String): String = when (toolId) {
         "cut" -> "✂"
         "convert" -> "⇄"
+        "extract" -> "↥"
         "recorder" -> "●"
         "analyzer" -> "⌁"
         else -> "•"
