@@ -28,8 +28,8 @@ android {
         applicationId = "com.nexauren.audiotools"
         minSdk = 23
         targetSdk = 37
-        versionCode = 17
-        versionName = "0.8.1"
+        versionCode = 18
+        versionName = "0.9.0"
         buildConfigField(
             "String",
             "PAYMENTS_BASE_URL",
