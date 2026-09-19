@@ -69,7 +69,7 @@ object AppStrings {
             "checking" to "A verificar…", "download_error" to "Não foi possível descarregar a atualização.", "release_open" to "Abrir release",
             "app_section" to "APP", "about_title" to "Sobre o Audio Tools", "about_desc" to "Ferramentas de áudio focadas, rápidas e locais, com módulos independentes para crescer sem complicar.",
             "about_head" to "Feito para trabalhar com áudio.", "about_body" to "Corta, converte, grava e analisa sem enviar os teus ficheiros para um serviço de processamento externo.",
-            "four_tools" to "4 ferramentas funcionais", "version" to "Versão", "back_action" to "Voltar",
+            "four_tools" to "5 ferramentas funcionais", "version" to "Versão", "back_action" to "Voltar",
             "edit_tool" to "EDITOR", "convert_tool" to "CONVERSOR", "record_tool" to "GRAVAÇÃO", "analyze_tool" to "ANÁLISE"
         ),
         "en" to mapOf(
@@ -94,7 +94,7 @@ object AppStrings {
             "download_started" to "Download started. When it finishes, the Android installer will open.", "release_missing" to "A new release exists, but no APK is attached yet.",
             "installer_permission" to "First allow this app to install updates.", "permission_active" to "Permission is already enabled.", "checking" to "Checking…", "download_error" to "Could not download the update.",
             "release_open" to "Open release", "app_section" to "APP", "about_title" to "About Audio Tools", "about_desc" to "Focused, fast local audio tools with independent modules designed to grow without becoming complicated.",
-            "about_head" to "Made for working with audio.", "about_body" to "Cut, convert, record and analyze without sending your files to an external processing service.", "four_tools" to "4 functional tools", "version" to "Version", "back_action" to "Back",
+            "about_head" to "Made for working with audio.", "about_body" to "Cut, convert, record and analyze without sending your files to an external processing service.", "four_tools" to "5 functional tools", "version" to "Version", "back_action" to "Back",
             "edit_tool" to "EDITOR", "convert_tool" to "CONVERTER", "record_tool" to "RECORDING", "analyze_tool" to "ANALYSIS"
         ),
         "fr" to mapOf(
@@ -119,7 +119,7 @@ object AppStrings {
             "download_started" to "Téléchargement lancé. À la fin, l’installateur Android s’ouvrira.", "release_missing" to "Une nouvelle release existe, mais aucun APK n’est attaché.",
             "installer_permission" to "Autorise d’abord les installations pour cette application.", "permission_active" to "L’autorisation est déjà active.", "checking" to "Vérification…", "download_error" to "Impossible de télécharger la mise à jour.",
             "release_open" to "Ouvrir la release", "app_section" to "APP", "about_title" to "À propos d’Audio Tools", "about_desc" to "Des outils audio locaux, rapides et ciblés, conçus pour évoluer sans devenir compliqués.",
-            "about_head" to "Pensé pour travailler avec l’audio.", "about_body" to "Coupe, convertis, enregistre et analyse sans envoyer tes fichiers vers un service de traitement externe.", "four_tools" to "4 outils fonctionnels", "version" to "Version", "back_action" to "Retour",
+            "about_head" to "Pensé pour travailler avec l’audio.", "about_body" to "Coupe, convertis, enregistre et analyse sans envoyer tes fichiers vers un service de traitement externe.", "four_tools" to "5 outils fonctionnels", "version" to "Version", "back_action" to "Retour",
             "edit_tool" to "ÉDITEUR", "convert_tool" to "CONVERTISSEUR", "record_tool" to "ENREGISTREMENT", "analyze_tool" to "ANALYSE"
         ),
         "es" to mapOf(
@@ -144,7 +144,7 @@ object AppStrings {
             "download_started" to "Descarga iniciada. Al terminar, se abrirá el instalador de Android.", "release_missing" to "Existe una release nueva, pero todavía no hay APK adjunto.",
             "installer_permission" to "Primero permite que esta aplicación instale actualizaciones.", "permission_active" to "El permiso ya está activo.", "checking" to "Comprobando…", "download_error" to "No se pudo descargar la actualización.",
             "release_open" to "Abrir release", "app_section" to "APP", "about_title" to "Acerca de Audio Tools", "about_desc" to "Herramientas de audio locales, rápidas y enfocadas, diseñadas para crecer sin complicarse.",
-            "about_head" to "Hecho para trabajar con audio.", "about_body" to "Corta, convierte, graba y analiza sin enviar tus archivos a un servicio de procesamiento externo.", "four_tools" to "4 herramientas funcionales", "version" to "Versión", "back_action" to "Volver",
+            "about_head" to "Hecho para trabajar con audio.", "about_body" to "Corta, convierte, graba y analiza sin enviar tus archivos a un servicio de procesamiento externo.", "four_tools" to "5 herramientas funcionales", "version" to "Versión", "back_action" to "Volver",
             "edit_tool" to "EDITOR", "convert_tool" to "CONVERSOR", "record_tool" to "GRABACIÓN", "analyze_tool" to "ANÁLISIS"
         ),
         "de" to mapOf(
@@ -169,7 +169,7 @@ object AppStrings {
             "download_started" to "Download gestartet. Nach Abschluss wird der Android-Installer geöffnet.", "release_missing" to "Ein neues Release existiert, aber noch kein APK ist angehängt.",
             "installer_permission" to "Erlaube zuerst dieser App, Updates zu installieren.", "permission_active" to "Berechtigung ist bereits aktiv.", "checking" to "Prüfe…", "download_error" to "Update konnte nicht heruntergeladen werden.",
             "release_open" to "Release öffnen", "app_section" to "APP", "about_title" to "Über Audio Tools", "about_desc" to "Fokussierte, schnelle lokale Audio-Werkzeuge mit unabhängigen Modulen für zukünftiges Wachstum.",
-            "about_head" to "Für die Arbeit mit Audio gemacht.", "about_body" to "Schneide, konvertiere, nimm auf und analysiere, ohne deine Dateien an einen externen Verarbeitungsdienst zu senden.", "four_tools" to "4 funktionale Werkzeuge", "version" to "Version", "back_action" to "Zurück",
+            "about_head" to "Für die Arbeit mit Audio gemacht.", "about_body" to "Schneide, konvertiere, nimm auf und analysiere, ohne deine Dateien an einen externen Verarbeitungsdienst zu senden.", "four_tools" to "5 funktionale Werkzeuge", "version" to "Version", "back_action" to "Zurück",
             "edit_tool" to "EDITOR", "convert_tool" to "KONVERTER", "record_tool" to "AUFNAHME", "analyze_tool" to "ANALYSE"
         )
     )
@@ -218,6 +218,25 @@ object AppStrings {
                     else -> listOf("Escolhe WAV ou M4A/AAC", "Seleciona o formato de saída", "Converte localmente", "Guarda o novo ficheiro")
                 }
             )
+            "extract" -> {
+                val lang = LanguageManager.get(context)
+                val title = when (lang) { "en" -> "Extract audio"; "fr" -> "Extraire l’audio"; "es" -> "Extraer audio"; "de" -> "Audio extrahieren"; else -> "Extrair áudio" }
+                val desc = when (lang) {
+                    "en" -> "Extract a video's audio track to M4A locally."
+                    "fr" -> "Extrait localement la piste audio d’une vidéo en M4A."
+                    "es" -> "Extrae localmente la pista de audio de un vídeo en M4A."
+                    "de" -> "Extrahiere die Audiospur eines Videos lokal als M4A."
+                    else -> "Extrai localmente a faixa de áudio de um vídeo para M4A."
+                }
+                val steps = when (lang) {
+                    "en" -> listOf("Choose a video", "Read its audio track", "Extract locally", "Save the M4A")
+                    "fr" -> listOf("Choisis une vidéo", "Lis sa piste audio", "Extrait localement", "Enregistre le M4A")
+                    "es" -> listOf("Elige un vídeo", "Lee su pista de audio", "Extrae localmente", "Guarda el M4A")
+                    "de" -> listOf("Video auswählen", "Audiospur lesen", "Lokal extrahieren", "M4A speichern")
+                    else -> listOf("Escolhe um vídeo", "Lê a faixa de áudio", "Extrai localmente", "Guarda o M4A")
+                }
+                ToolCopy(title, desc, desc, title, "MP4 / vídeo", "M4A (AAC)", steps)
+            }
             "recorder" -> ToolCopy(
                 if (LanguageManager.get(context) == "pt") "Gravador" else when (LanguageManager.get(context)) { "en" -> "Recorder"; "fr" -> "Enregistreur"; "es" -> "Grabadora"; else -> "Recorder" },
                 if (LanguageManager.get(context) == "pt") "Grava voz, ideias, podcasts e takes com medição em tempo real." else when (LanguageManager.get(context)) {
