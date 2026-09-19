@@ -23,7 +23,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -35,6 +34,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.nexauren.audiotools.R
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
+import com.nexauren.audiotools.storage.NexaurenStorage
 import java.io.BufferedInputStream
 import java.io.DataInputStream
 import java.io.File
@@ -63,6 +63,27 @@ class ToolDetailActivity : ComponentActivity() {
             "analyzer" -> onAnalyzerFileSelected(uri)
         }
     }
+    private val directoryPicker =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri == null) {
+                statusView?.text =
+                    "Escolhe uma pasta para guardar o resultado."
+                return@registerForActivityResult
+            }
+
+            runCatching {
+                NexaurenStorage.rememberTree(
+                    this,
+                    uri
+                )
+            }.onSuccess {
+                savePendingResult()
+            }.onFailure {
+                statusView?.text =
+                    "Não foi possível usar esta pasta. Escolhe outra."
+            }
+        }
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) startRecordingInternal()
@@ -73,6 +94,9 @@ class ToolDetailActivity : ComponentActivity() {
     private var selectedUri: Uri? = null
     private var selectedDurationMs: Long = 0L
     private var lastOutputPath: String? = null
+    private var lastOutputUri: Uri? = null
+    private var pendingSaveMimeType = "audio/mp4"
+    private var processingView: CircuitProgressView? = null
     private var mediaRecorder: MediaRecorder? = null
     private var mediaPlayer: MediaPlayer? = null
     private var recordingStartedAt = 0L
@@ -101,7 +125,6 @@ class ToolDetailActivity : ComponentActivity() {
             finish()
             return
         }
-        UsageStore.record(this, tool.id)
         buildUi(tool)
     }
 
@@ -214,44 +237,92 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun shareLastResult() {
-        val path = lastOutputPath
+        val savedUri = lastOutputUri
+
+        if (savedUri != null) {
+            runCatching {
+                startActivity(
+                    Intent(
+                        Intent.ACTION_SEND
+                    ).apply {
+                        type = "audio/*"
+                        putExtra(
+                            Intent.EXTRA_STREAM,
+                            savedUri
+                        )
+                        addFlags(
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        )
+                        clipData =
+                            android.content.ClipData.newRawUri(
+                                "Audio Tools",
+                                savedUri
+                            )
+                    }
+                )
+            }.onFailure {
+                Toast.makeText(
+                    this,
+                    "Não foi possível abrir a partilha.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            return
+        }
+
+        val path = pendingPreviewPath
         if (path.isNullOrBlank()) {
-            android.widget.Toast.makeText(
+            Toast.makeText(
                 this,
-                "Ainda não existe um resultado para partilhar.",
-                android.widget.Toast.LENGTH_SHORT
+                "Primeiro cria um resultado.",
+                Toast.LENGTH_SHORT
             ).show()
             return
         }
 
         val file = File(path)
         if (!file.exists()) {
-            android.widget.Toast.makeText(
+            Toast.makeText(
                 this,
-                "O resultado já não está disponível neste dispositivo.",
-                android.widget.Toast.LENGTH_LONG
+                "O resultado já não está disponível.",
+                Toast.LENGTH_LONG
             ).show()
             return
         }
 
         runCatching {
-            val uri = androidx.core.content.FileProvider.getUriForFile(
-                this,
-                applicationContext.packageName + ".fileprovider",
-                file
-            )
+            val uri =
+                androidx.core.content.FileProvider.getUriForFile(
+                    this,
+                    applicationContext.packageName +
+                        ".fileprovider",
+                    file
+                )
+
             startActivity(
-                Intent(Intent.ACTION_SEND).apply {
+                Intent(
+                    Intent.ACTION_SEND
+                ).apply {
                     type = "audio/*"
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    putExtra(
+                        Intent.EXTRA_STREAM,
+                        uri
+                    )
+                    addFlags(
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                    clipData =
+                        android.content.ClipData.newRawUri(
+                            "Audio Tools",
+                            uri
+                        )
                 }
             )
         }.onFailure {
-            android.widget.Toast.makeText(
+            Toast.makeText(
                 this,
                 "Não foi possível abrir a partilha.",
-                android.widget.Toast.LENGTH_LONG
+                Toast.LENGTH_LONG
             ).show()
         }
     }
@@ -303,9 +374,24 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(ViewKit.spacer(this, 9))
         content.addView(fields)
 
-        val progress = ProgressBar(this).apply { visibility = View.GONE }
-        content.addView(ViewKit.spacer(this, 5))
-        content.addView(progress)
+        val circuit =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ToolDetailActivity,
+                            58
+                        )
+                    )
+            }
+
+        processingView = circuit
+
+        content.addView(
+            ViewKit.spacer(this, 5)
+        )
+        content.addView(circuit)
 
         primaryAction = ViewKit.button(this, AppStrings.t(this, "cut_action"), true, R.color.audio_blue).apply {
             isEnabled = false
@@ -317,7 +403,12 @@ class ToolDetailActivity : ComponentActivity() {
                     statusView?.text = AppStrings.t(this@ToolDetailActivity, "cut_bad")
                     return@setOnClickListener
                 }
-                performCut(uri, (start * 1000).toLong(), (end * 1000).toLong(), progress)
+                performCut(
+                    uri,
+                    (start * 1000).toLong(),
+                    (end * 1000).toLong(),
+                    circuit
+                )
             }
         }
         content.addView(ViewKit.spacer(this, 8))
@@ -330,9 +421,18 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(ViewKit.spacer(this, 7))
         content.addView(playbackAction)
         content.addView(ViewKit.spacer(this, 7))
-        content.addView(ViewKit.button(this, AppStrings.t(this, "save_result"), false, R.color.audio_blue).apply {
-            setOnClickListener { saveCutResult() }
-        })
+        content.addView(
+            ViewKit.button(
+                this,
+                "Guardar na pasta da ferramenta",
+                false,
+                R.color.audio_blue
+            ).apply {
+                setOnClickListener {
+                    savePendingResult()
+                }
+            }
+        )
         content.addView(ViewKit.spacer(this, 7))
         content.addView(ViewKit.button(this, AppStrings.t(this, "reset_edit"), false, R.color.audio_blue).apply {
             setOnClickListener {
@@ -406,14 +506,34 @@ class ToolDetailActivity : ComponentActivity() {
             setTextColor(ContextCompat.getColor(this@ToolDetailActivity, R.color.audio_muted))
         })
 
-        val progress = ProgressBar(this).apply { visibility = View.GONE }
-        content.addView(ViewKit.spacer(this, 6))
-        content.addView(progress)
+        val circuit =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ToolDetailActivity,
+                            58
+                        )
+                    )
+            }
+
+        processingView = circuit
+
+        content.addView(
+            ViewKit.spacer(this, 6)
+        )
+        content.addView(circuit)
+
         primaryAction = ViewKit.button(this, AppStrings.t(this, "convert_action"), true, R.color.audio_purple).apply {
             isEnabled = false
             setOnClickListener {
                 val uri = selectedUri ?: return@setOnClickListener
-                performConversion(uri, convertTarget, progress)
+                performConversion(
+                    uri,
+                    convertTarget,
+                    circuit
+                )
             }
         }
         content.addView(ViewKit.spacer(this, 7))
@@ -468,10 +588,33 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(statusView)
         content.addView(ViewKit.spacer(this, 9))
         content.addView(ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Choose video"; "fr" -> "Choisir une vidéo"; "es" -> "Elegir vídeo"; "de" -> "Video auswählen"; else -> "Escolher vídeo" }, true, R.color.audio_green).apply { setOnClickListener { filePicker.launch(arrayOf("video/mp4", "video/*")) } })
-        val progress = ProgressBar(this).apply { visibility = View.GONE }
-        content.addView(ViewKit.spacer(this, 8))
-        content.addView(progress)
-        primaryAction = ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Extract and save"; "fr" -> "Extraire et enregistrer"; "es" -> "Extraer y guardar"; "de" -> "Extrahieren und speichern"; else -> "Extrair e guardar" }, true, R.color.audio_green).apply { isEnabled = false; setOnClickListener { selectedUri?.let { performExtract(it, progress) } } }
+        val circuit =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ToolDetailActivity,
+                            58
+                        )
+                    )
+            }
+
+        processingView = circuit
+
+        content.addView(
+            ViewKit.spacer(this, 8)
+        )
+        content.addView(circuit)
+
+        primaryAction = ViewKit.button(this, when (LanguageManager.get(this)) { "en" -> "Extract and save"; "fr" -> "Extraire et enregistrer"; "es" -> "Extraer y guardar"; "de" -> "Extrahieren und speichern"; else -> "Extrair e guardar" }, true, R.color.audio_green).apply { isEnabled = false; setOnClickListener {
+                selectedUri?.let {
+                    performExtract(
+                        it,
+                        circuit
+                    )
+                }
+            } }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(primaryAction)
         playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_result"), false, R.color.audio_green).apply { visibility = View.GONE; setOnClickListener { pendingPreviewPath?.let { playFile(File(it)) } ?: lastOutputPath?.let { playFile(File(it)) } } }
@@ -503,6 +646,26 @@ class ToolDetailActivity : ComponentActivity() {
             setOnClickListener { if (mediaRecorder == null) startRecording() else stopRecording() }
         }
         content.addView(primaryAction)
+
+        val circuit =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ToolDetailActivity,
+                            58
+                        )
+                    )
+            }
+
+        processingView = circuit
+
+        content.addView(
+            ViewKit.spacer(this, 7)
+        )
+        content.addView(circuit)
+
         playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_result"), false, R.color.audio_red).apply {
             visibility = MaterialButton.GONE
             setOnClickListener { pendingPreviewPath?.let { playFile(File(it)) } ?: lastOutputPath?.let { playFile(File(it)) } }
@@ -533,8 +696,34 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(statusView)
         content.addView(ViewKit.spacer(this, 9))
         content.addView(ViewKit.button(this, AppStrings.t(this, "analyze_action"), true, R.color.audio_yellow).apply {
-            setOnClickListener { filePicker.launch(arrayOf("audio/*", "video/mp4")) }
+            setOnClickListener {
+                filePicker.launch(
+                    arrayOf(
+                        "audio/*",
+                        "video/mp4"
+                    )
+                )
+            }
         })
+
+        val circuit =
+            CircuitProgressView(this).apply {
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewKit.dp(
+                            this@ToolDetailActivity,
+                            58
+                        )
+                    )
+            }
+
+        processingView = circuit
+
+        content.addView(
+            ViewKit.spacer(this, 7)
+        )
+        content.addView(circuit)
         playbackAction = ViewKit.button(this, AppStrings.t(this, "playing"), false, R.color.audio_yellow).apply {
             visibility = MaterialButton.GONE
             setOnClickListener { selectedUri?.let { playUri(it) } }
@@ -597,14 +786,72 @@ class ToolDetailActivity : ComponentActivity() {
         }
     }
 
-    private fun performCut(uri: Uri, startMs: Long, endMs: Long, progress: ProgressBar) {
+    private fun performCut(
+        uri: Uri,
+        startMs: Long,
+        endMs: Long,
+        circuit: CircuitProgressView
+    ) {
         previewStartMs = startMs
         previewEndMs = endMs
-        progress.visibility = View.GONE
-        playbackAction?.visibility = View.VISIBLE
-        playbackAction?.text = AppStrings.t(this, "preview_selection")
-        primaryAction?.isEnabled = true
-        statusView?.text = AppStrings.t(this, "preview_ready")
+        primaryAction?.isEnabled = false
+        circuit.start()
+        statusView?.text = "A processar o corte…"
+
+        worker.execute {
+            try {
+                val sourceName =
+                    displayName(uri)
+                        .substringBeforeLast('.')
+                        .ifBlank { "audio" }
+
+                val output =
+                    File(
+                        cacheDir,
+                        sourceName +
+                            "_cut_preview_" +
+                            System.currentTimeMillis() +
+                            ".m4a"
+                    )
+
+                trimAac(
+                    uri,
+                    startMs * 1000L,
+                    endMs * 1000L,
+                    output
+                )
+
+                pendingPreviewPath =
+                    output.absolutePath
+
+                pendingPreviewName =
+                    sourceName +
+                        "_cut_" +
+                        System.currentTimeMillis() +
+                        ".m4a"
+
+                pendingSaveMimeType =
+                    "audio/mp4"
+
+                mainHandler.post {
+                    circuit.stop()
+                    primaryAction?.isEnabled = true
+                    playbackAction?.visibility =
+                        View.VISIBLE
+                    playbackAction?.text =
+                        "▶  Ouvir resultado"
+                    statusView?.text =
+                        "Resultado pronto. Agora podes ouvir e guardar."
+                }
+            } catch (_: Exception) {
+                mainHandler.post {
+                    circuit.stop()
+                    primaryAction?.isEnabled = true
+                    statusView?.text =
+                        "Não foi possível processar este corte."
+                }
+            }
+        }
     }
 
     private fun previewCutSelection() {
@@ -637,21 +884,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun saveCutResult() {
-        val uri = selectedUri ?: return
-        worker.execute {
-            try {
-                val sourceName = displayName(uri).substringBeforeLast('.')
-                val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
-                val output = File(outputDir, sourceName + "_cut_" + System.currentTimeMillis() + ".m4a")
-                trimAac(uri, previewStartMs * 1000L, previewEndMs * 1000L, output)
-                lastOutputPath = output.absolutePath
-                mainHandler.post {
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "saved_result") + " • " + output.name
-                }
-            } catch (_: Exception) {
-                mainHandler.post { statusView?.text = AppStrings.t(this@ToolDetailActivity, "cut_error") }
-            }
-        }
+        savePendingResult()
     }
 
     private fun trimAac(uri: Uri, startUs: Long, endUs: Long, output: File) {
@@ -703,6 +936,7 @@ class ToolDetailActivity : ComponentActivity() {
     private fun onConverterFileSelected(uri: Uri) {
         selectedUri = uri
         lastOutputPath = null
+        lastOutputUri = null
         val name = displayName(uri)
         val lower = name.lowercase(Locale.US)
         val isWav = lower.endsWith(".wav") || lower.endsWith(".wave")
@@ -716,14 +950,18 @@ class ToolDetailActivity : ComponentActivity() {
     private fun onExtractVideoSelected(uri: Uri) {
         selectedUri = uri
         lastOutputPath = null
+        lastOutputUri = null
         statusView?.text = displayName(uri)
         primaryAction?.isEnabled = true
         playbackAction?.visibility = View.GONE
     }
 
-    private fun performExtract(uri: Uri, progress: ProgressBar) {
+    private fun performExtract(
+        uri: Uri,
+        circuit: CircuitProgressView
+    ) {
         primaryAction?.isEnabled = false
-        progress.visibility = View.VISIBLE
+        circuit.start()
         statusView?.text = when (LanguageManager.get(this)) { "en" -> "Extracting audio…"; "fr" -> "Extraction de l’audio…"; "es" -> "Extrayendo audio…"; "de" -> "Audio wird extrahiert…"; else -> "A extrair áudio…" }
         worker.execute {
             try {
@@ -733,8 +971,9 @@ class ToolDetailActivity : ComponentActivity() {
                 extractAac(uri, output)
                 pendingPreviewPath = output.absolutePath
                 pendingPreviewName = sourceName + "_audio.m4a"
+                pendingSaveMimeType = "audio/mp4"
                 mainHandler.post {
-                    progress.visibility = View.GONE
+                    circuit.stop()
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
                     playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
@@ -748,7 +987,7 @@ class ToolDetailActivity : ComponentActivity() {
                 }
             } catch (_: Exception) {
                 mainHandler.post {
-                    progress.visibility = View.GONE
+                    circuit.stop()
                     primaryAction?.isEnabled = true
                     statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
                         "en" -> "Could not extract audio from this video."
@@ -801,9 +1040,13 @@ class ToolDetailActivity : ComponentActivity() {
         }
         require(output.exists() && output.length() > 0L)
     }
-    private fun performConversion(uri: Uri, target: String, progress: ProgressBar) {
+    private fun performConversion(
+        uri: Uri,
+        target: String,
+        circuit: CircuitProgressView
+    ) {
         primaryAction?.isEnabled = false
-        progress.visibility = View.VISIBLE
+        circuit.start()
         statusView?.text = AppStrings.t(this, "conversion_progress")
         worker.execute {
             try {
@@ -812,8 +1055,14 @@ class ToolDetailActivity : ComponentActivity() {
                 if (target == "m4a") wavToM4a(uri, output) else m4aToWav(uri, output)
                 pendingPreviewPath = output.absolutePath
                 pendingPreviewName = sourceName + "_converted." + target
+                pendingSaveMimeType =
+                    if (target == "wav") {
+                        "audio/wav"
+                    } else {
+                        "audio/mp4"
+                    }
                 mainHandler.post {
-                    progress.visibility = View.GONE
+                    circuit.stop()
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
                     playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
@@ -821,9 +1070,10 @@ class ToolDetailActivity : ComponentActivity() {
                 }
             } catch (_: Exception) {
                 mainHandler.post {
-                    progress.visibility = View.GONE
+                    circuit.stop()
                     primaryAction?.isEnabled = true
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "conversion_error")
+                    statusView?.text =
+                        "Não foi possível converter este áudio."
                 }
             }
         }
@@ -958,21 +1208,99 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun savePendingResult() {
-        val source = pendingPreviewPath?.let { File(it) } ?: return
-        if (!source.exists()) return
+        val source =
+            pendingPreviewPath
+                ?.let { File(it) }
+
+        if (
+            source == null ||
+            !source.exists()
+        ) {
+            statusView?.text =
+                "Ainda não existe um resultado para guardar."
+            return
+        }
+
+        if (
+            !NexaurenStorage.hasTree(this)
+        ) {
+            statusView?.text =
+                "Escolhe primeiro a pasta do Audio Tools…"
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(
+                    "Escolher pasta de resultados"
+                )
+                .setMessage(
+                    "Escolhe uma pasta no armazenamento partilhado. O Audio Tools criará dentro dela a pasta desta ferramenta com o sufixo - Nexauren."
+                )
+                .setNegativeButton(
+                    "Cancelar",
+                    null
+                )
+                .setPositiveButton(
+                    "Escolher pasta"
+                ) { _, _ ->
+                    directoryPicker.launch(null)
+                }
+                .show()
+
+            return
+        }
+
+        val tool =
+            ToolCatalog.get(
+                activeToolId
+            )
+
+        val toolName =
+            tool?.let {
+                AppStrings
+                    .tool(
+                        this,
+                        it.id
+                    ).title
+            } ?: "Audio Tool"
+
+        val name =
+            pendingPreviewName
+                ?: source.name
+
+        processingView?.start()
+        statusView?.text =
+            "A guardar em " +
+                toolName +
+                " - Nexauren…"
+
         worker.execute {
             try {
-                val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
-                val target = File(dir, pendingPreviewName ?: source.name)
-                source.inputStream().use { input ->
-                    target.outputStream().use { output -> input.copyTo(output) }
-                }
-                lastOutputPath = target.absolutePath
+                val saved =
+                    NexaurenStorage.saveAudio(
+                        this@ToolDetailActivity,
+                        toolName,
+                        source,
+                        name,
+                        pendingSaveMimeType
+                    )
+
                 mainHandler.post {
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "saved_result") + " • " + target.name
+                    lastOutputUri =
+                        saved.uri
+                    lastOutputPath =
+                        source.absolutePath
+                    processingView?.stop()
+                    statusView?.text =
+                        "Guardado em " +
+                            toolName +
+                            " - Nexauren • " +
+                            saved.name
                 }
             } catch (_: Exception) {
-                mainHandler.post { statusView?.text = AppStrings.t(this@ToolDetailActivity, "save_error") }
+                mainHandler.post {
+                    processingView?.stop()
+                    statusView?.text =
+                        "Não foi possível guardar o resultado nesta pasta."
+                }
             }
         }
     }
@@ -1108,18 +1436,42 @@ class ToolDetailActivity : ComponentActivity() {
 
     private fun onAnalyzerFileSelected(uri: Uri) {
         selectedUri = uri
-        statusView?.text = AppStrings.t(this, "analyzing") + " " + displayName(uri) + "…"
+        lastOutputPath = null
+        lastOutputUri = null
         playbackAction?.visibility = View.GONE
+        processingView?.start()
+
+        statusView?.text =
+            AppStrings.t(
+                this,
+                "analyzing"
+            ) +
+            " " +
+            displayName(uri) +
+            "…"
+
         worker.execute {
             try {
-                val report = analyzeAudio(uri)
+                val report =
+                    analyzeAudio(uri)
+
                 mainHandler.post {
+                    processingView?.stop()
                     statusView?.text = report
-                    playbackAction?.visibility = View.VISIBLE
-                    playbackAction?.text = "▶"
+                    playbackAction?.visibility =
+                        View.VISIBLE
+                    playbackAction?.text =
+                        "▶  Ouvir original"
                 }
             } catch (_: Exception) {
-                mainHandler.post { statusView?.text = AppStrings.t(this@ToolDetailActivity, "analysis_error") }
+                mainHandler.post {
+                    processingView?.stop()
+                    statusView?.text =
+                        AppStrings.t(
+                            this@ToolDetailActivity,
+                            "analysis_error"
+                        )
+                }
             }
         }
     }
@@ -1184,6 +1536,8 @@ class ToolDetailActivity : ComponentActivity() {
         val name = "AudioTools_Record_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".m4a"
         val output = File(cacheDir, name)
         try {
+            processingView?.start()
+
             mediaRecorder = MediaRecorder(this).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -1197,6 +1551,7 @@ class ToolDetailActivity : ComponentActivity() {
             lastOutputPath = null
             pendingPreviewPath = output.absolutePath
             pendingPreviewName = name
+            pendingSaveMimeType = "audio/mp4"
             recordingStartedAt = System.currentTimeMillis()
             primaryAction?.text = AppStrings.t(this, "record_stop")
             primaryAction?.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red_dark))
