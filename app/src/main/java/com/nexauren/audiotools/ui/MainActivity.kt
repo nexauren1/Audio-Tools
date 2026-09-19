@@ -4,6 +4,8 @@ import android.Manifest
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -21,12 +23,18 @@ import com.nexauren.audiotools.R
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.notifications.NotificationCenter
+import com.nexauren.audiotools.payments.PaymentClient
 import com.nexauren.audiotools.update.UpdateScheduler
+import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var toolGrid: LinearLayout
     private var searchInput: EditText? = null
+    private val accessExecutor =
+        Executors.newSingleThreadExecutor()
+    private val accessHandler =
+        Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +54,11 @@ class MainActivity : ComponentActivity() {
         UpdateScheduler.schedule(this)
         requestNotificationsIfNeeded()
         buildUi()
+    }
+
+    override fun onDestroy() {
+        accessExecutor.shutdownNow()
+        super.onDestroy()
     }
 
     override fun onResume() {
@@ -251,11 +264,10 @@ class MainActivity : ComponentActivity() {
         val copy = AppStrings.tool(this, tool.id)
         val card = ViewKit.card(this, clickable = true, accentColorRes = accent).apply {
             setOnClickListener {
-                if (tool.id == "pro-inspector") {
-                    startActivity(ProDemoActivity.intent(this@MainActivity))
-                } else {
-                    startActivity(ToolDetailActivity.intent(this@MainActivity, tool.id))
-                }
+                openToolOrUpgrade(
+                    tool,
+                    this
+                )
             }
         }
         val content = LinearLayout(this).apply {
@@ -293,10 +305,104 @@ class MainActivity : ComponentActivity() {
             setTextColor(ContextCompat.getColor(this@MainActivity, R.color.audio_muted))
             setLineSpacing(1.05f, 1f)
         })
-        content.addView(ViewKit.spacer(this, 8))
-        content.addView(ViewKit.pill(this, copy.category, colorRes = accent))
+        content.addView(
+            ViewKit.spacer(this, 8)
+        )
+        content.addView(
+            ViewKit.pill(
+                this,
+                copy.category,
+                colorRes = accent
+            )
+        )
+        content.addView(
+            ViewKit.spacer(this, 5)
+        )
+        content.addView(
+            ViewKit.pill(
+                this,
+                if (
+                    tool.requiredPlan == "FREE"
+                ) {
+                    "FREE"
+                } else {
+                    tool.requiredPlan + "  🔒"
+                },
+                colorRes = accent
+            )
+        )
         card.addView(content)
         return card
+    }
+
+    private fun openToolOrUpgrade(
+        tool: AudioTool,
+        card: View
+    ) {
+        if (
+            tool.requiredPlan == "FREE"
+        ) {
+            openTool(tool)
+            return
+        }
+
+        card.isEnabled = false
+
+        accessExecutor.execute {
+            try {
+                val entitlement =
+                    PaymentClient.getEntitlement()
+
+                accessHandler.post {
+                    card.isEnabled = true
+
+                    if (
+                        entitlement.hasAccess(
+                            tool.requiredPlan
+                        )
+                    ) {
+                        openTool(tool)
+                    } else {
+                        startActivity(
+                            UpgradeActivity.intent(
+                                this@MainActivity,
+                                tool.requiredPlan
+                            )
+                        )
+                    }
+                }
+            } catch (error: Exception) {
+                accessHandler.post {
+                    card.isEnabled = true
+                    android.widget.Toast.makeText(
+                        this@MainActivity,
+                        "Não foi possível verificar o acesso. Tenta novamente.",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun openTool(
+        tool: AudioTool
+    ) {
+        if (
+            tool.id == "pro-inspector"
+        ) {
+            startActivity(
+                ProDemoActivity.intent(
+                    this@MainActivity
+                )
+            )
+        } else {
+            startActivity(
+                ToolDetailActivity.intent(
+                    this@MainActivity,
+                    tool.id
+                )
+            )
+        }
     }
 
     private fun quickFlow(): View {
