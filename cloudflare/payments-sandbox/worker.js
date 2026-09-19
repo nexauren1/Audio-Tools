@@ -224,9 +224,18 @@ async function requireUser(request, env) {
   const token = getBearerToken(request);
 
   if (!token) {
-    return json(
-      { error: "Authentication required." },
-      401
+    throw new Response(
+      JSON.stringify({
+        error: "Authentication required."
+      }),
+      {
+        status: 401,
+        headers: {
+          "content-type":
+            "application/json; charset=utf-8",
+          ...corsHeaders()
+        }
+      }
     );
   }
 
