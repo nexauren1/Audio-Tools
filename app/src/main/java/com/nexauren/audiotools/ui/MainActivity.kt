@@ -60,6 +60,9 @@ class MainActivity : ComponentActivity() {
         UpdateScheduler.schedule(this)
         requestNotificationsIfNeeded()
         buildUi()
+        applyPlanBadge(
+            PlanAccessStore.current(this)
+        )
         refreshPlan()
     }
 
@@ -73,7 +76,7 @@ class MainActivity : ComponentActivity() {
                     ?.toString()
                     .orEmpty()
             )
-            refreshPlan()
+            // Access is kept locally for the active account.
         }
     }
 
@@ -852,6 +855,12 @@ class MainActivity : ComponentActivity() {
             ViewKit.spacer(this, 6)
         )
 
+        val hasAccess =
+            PlanAccessStore.hasAccess(
+                this,
+                tool.requiredPlan
+            )
+
         body.addView(
             ViewKit.pill(
                 this,
@@ -860,6 +869,8 @@ class MainActivity : ComponentActivity() {
                         "FREE"
                 ) {
                     "FREE"
+                } else if (hasAccess) {
+                    tool.requiredPlan
                 } else {
                     tool.requiredPlan +
                         "  🔒"
@@ -909,7 +920,11 @@ class MainActivity : ComponentActivity() {
                 "›",
                 if (
                     tool.requiredPlan ==
-                        "FREE"
+                        "FREE" ||
+                    PlanAccessStore.hasAccess(
+                        this@MainActivity,
+                        tool.requiredPlan
+                    )
                 ) {
                     "Abrir"
                 } else {
@@ -983,49 +998,19 @@ class MainActivity : ComponentActivity() {
         source: View
     ) {
         if (
-            tool.requiredPlan ==
-                "FREE"
+            PlanAccessStore.hasAccess(
+                this,
+                tool.requiredPlan
+            )
         ) {
             openTool(tool)
-            return
-        }
-
-        source.isEnabled = false
-
-        executor.execute {
-            try {
-                val entitlement =
-                    PaymentClient.getEntitlement()
-
-                handler.post {
-                    source.isEnabled = true
-
-                    if (
-                        entitlement.hasAccess(
-                            tool.requiredPlan
-                        )
-                    ) {
-                        openTool(tool)
-                    } else {
-                        startActivity(
-                            UpgradeActivity.intent(
-                                this@MainActivity,
-                                tool.requiredPlan
-                            )
-                        )
-                    }
-                }
-            } catch (_: Exception) {
-                handler.post {
-                    source.isEnabled = true
-
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Não foi possível confirmar o acesso agora. Tenta novamente.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
+        } else {
+            startActivity(
+                UpgradeActivity.intent(
+                    this,
+                    tool.requiredPlan
+                )
+            )
         }
     }
 
@@ -1056,32 +1041,50 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 PaymentClient.getEntitlement()
             }.onSuccess { entitlement ->
+                PlanAccessStore.save(
+                    this@MainActivity,
+                    entitlement
+                )
+
                 handler.post {
-                    val plan =
-                        entitlement.plan
-
-                    val color =
-                        when (plan) {
-                            "PREMIUM" ->
-                                R.color.audio_purple
-                            "PRO" ->
-                                R.color.audio_blue
-                            else ->
-                                R.color.audio_green
-                        }
-
-                    planView?.let {
-                        it.text =
-                            plan
-
-                        ViewKit.setPillColor(
-                            it,
-                            this@MainActivity,
-                            color
-                        )
-                    }
+                    applyPlanBadge(
+                        entitlement
+                    )
+                    renderTools(
+                        searchInput
+                            ?.text
+                            ?.toString()
+                            .orEmpty()
+                    )
                 }
             }
+        }
+    }
+
+    private fun applyPlanBadge(
+        entitlement:
+            com.nexauren.audiotools.payments.Entitlement
+    ) {
+        val plan =
+            entitlement.plan
+
+        val color =
+            when (plan) {
+                "PREMIUM" ->
+                    R.color.audio_purple
+                "PRO" ->
+                    R.color.audio_blue
+                else ->
+                    R.color.audio_green
+            }
+
+        planView?.let {
+            it.text = plan
+            ViewKit.setPillColor(
+                it,
+                this@MainActivity,
+                color
+            )
         }
     }
 
