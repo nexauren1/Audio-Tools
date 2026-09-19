@@ -74,15 +74,14 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle assembleRelease --stacktrace
 
-      - name: Verify Firebase-generated Google OAuth resource
+      - name: Verify Firebase Google OAuth resource
         if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
-          values_file="app/build/generated/res/google-services/release/values/values.xml"
-          test -f "$values_file"
-          grep -q 'default_web_client_id' "$values_file"
-          echo "Firebase google-services.json processed and default_web_client_id was generated."
+          match="$(grep -R -l "default_web_client_id" app/build/generated/res/google-services 2>/dev/null | head -n 1 || true)"
+          test -n "$match"
+          echo "Firebase OAuth client resource generated: $match"
 
       - name: Print APK signing certificate
         if: github.event_name != 'pull_request'
