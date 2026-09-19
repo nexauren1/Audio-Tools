@@ -26,6 +26,7 @@
         </provider>
 
         <activity android:name=".ui.AppPagesActivity" android:exported="false" />
+        <activity android:name=".ui.StorageActivity" android:exported="false" />
         <activity android:name=".ui.ChangelogActivity" android:exported="false" />
         <activity android:name=".ui.AboutActivity" android:exported="false" />
         <activity android:name=".ui.AccountActivity" android:exported="false" />
