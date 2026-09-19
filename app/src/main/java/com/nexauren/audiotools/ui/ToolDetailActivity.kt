@@ -87,6 +87,10 @@ class ToolDetailActivity : ComponentActivity() {
     private var trimEndInput: TextInputEditText? = null
     private var convertTarget = "m4a"
     private var convertTargetRow: LinearLayout? = null
+    private var pendingPreviewPath: String? = null
+    private var previewStartMs = 0L
+    private var previewEndMs = 0L
+    private var previewStopRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -269,14 +273,23 @@ class ToolDetailActivity : ComponentActivity() {
         content.addView(ViewKit.spacer(this, 8))
         content.addView(primaryAction)
 
-        playbackAction = ViewKit.button(this, AppStrings.t(this, "original"), false, R.color.audio_blue).apply {
+        playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_selection"), false, R.color.audio_blue).apply {
             visibility = MaterialButton.GONE
-            setOnClickListener {
-                lastOutputPath?.let { playFile(File(it)) } ?: selectedUri?.let { playUri(it) }
-            }
+            setOnClickListener { previewCutSelection() }
         }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(playbackAction)
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(ViewKit.button(this, AppStrings.t(this, "save_result"), false, R.color.audio_blue).apply {
+            setOnClickListener { saveCutResult() }
+        })
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(ViewKit.button(this, AppStrings.t(this, "reset_edit"), false, R.color.audio_blue).apply {
+            setOnClickListener {
+                trimView?.resetRange()
+                statusView?.text = AppStrings.t(this@ToolDetailActivity, "preview_ready")
+            }
+        })
         card.addView(content)
         root.addView(card)
 
@@ -525,29 +538,58 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun performCut(uri: Uri, startMs: Long, endMs: Long, progress: ProgressBar) {
-        primaryAction?.isEnabled = false
-        progress.visibility = View.VISIBLE
-        statusView?.text = AppStrings.t(this, "cutting")
+        previewStartMs = startMs
+        previewEndMs = endMs
+        progress.visibility = View.GONE
+        playbackAction?.visibility = View.VISIBLE
+        playbackAction?.text = AppStrings.t(this, "preview_selection")
+        primaryAction?.isEnabled = true
+        statusView?.text = AppStrings.t(this, "preview_ready")
+    }
+
+    private fun previewCutSelection() {
+        val uri = selectedUri ?: return
+        releasePlayer()
+        val player = MediaPlayer()
+        try {
+            player.setDataSource(this, uri)
+            player.setOnPreparedListener {
+                mediaPlayer = player
+                player.seekTo(previewStartMs.toInt())
+                player.start()
+                previewStopRunnable = Runnable {
+                    if (mediaPlayer === player) {
+                        player.pause()
+                        statusView?.text = AppStrings.t(this@ToolDetailActivity, "preview_ready")
+                    }
+                }
+                mainHandler.postDelayed(previewStopRunnable!!, (previewEndMs - previewStartMs).coerceAtLeast(200L))
+                statusView?.text = AppStrings.t(this, "playing_selection")
+            }
+            player.setOnCompletionListener {
+                if (mediaPlayer === player) mediaPlayer = null
+            }
+            player.prepareAsync()
+        } catch (_: Exception) {
+            player.release()
+            statusView?.text = AppStrings.t(this, "cut_error")
+        }
+    }
+
+    private fun saveCutResult() {
+        val uri = selectedUri ?: return
         worker.execute {
             try {
                 val sourceName = displayName(uri).substringBeforeLast('.')
                 val outputDir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "AudioTools").apply { mkdirs() }
                 val output = File(outputDir, sourceName + "_cut_" + System.currentTimeMillis() + ".m4a")
-                trimAac(uri, startMs * 1000L, endMs * 1000L, output)
+                trimAac(uri, previewStartMs * 1000L, previewEndMs * 1000L, output)
                 lastOutputPath = output.absolutePath
                 mainHandler.post {
-                    progress.visibility = View.GONE
-                    primaryAction?.isEnabled = true
-                    playbackAction?.visibility = View.VISIBLE
-                    playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "result")
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "cut_ok") + " • " + formatDuration(endMs - startMs) + " • " + output.name
+                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "saved_result") + " • " + output.name
                 }
             } catch (_: Exception) {
-                mainHandler.post {
-                    progress.visibility = View.GONE
-                    primaryAction?.isEnabled = true
-                    statusView?.text = AppStrings.t(this@ToolDetailActivity, "cut_error")
-                }
+                mainHandler.post { statusView?.text = AppStrings.t(this@ToolDetailActivity, "cut_error") }
             }
         }
     }
