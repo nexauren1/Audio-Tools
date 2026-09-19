@@ -8,6 +8,7 @@ on:
       - "cloudflare/schema.sql"
   push:
     branches:
+      - "main"
       - "paypal-sandbox"
     paths:
       - "worker.js"
