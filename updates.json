@@ -1,11 +1,11 @@
 {
-  "version": "0.6.4",
+  "version": "0.6.5",
   "tools": [],
   "news": [
     {
-      "id": "v0.6.4-auth-diagnostics",
-      "title": "Autenticação Firebase diagnosticada",
-      "description": "Melhoria do tratamento de erros do Firebase para identificar a causa real da falha de criação de conta e login."
+      "id": "v0.6.5-firebase-init-diagnostics",
+      "title": "Diagnóstico da configuração Firebase",
+      "description": "A inicialização do Firebase agora identifica e mostra a causa técnica real quando a configuração da versão não pode ser carregada."
     }
   ]
 }

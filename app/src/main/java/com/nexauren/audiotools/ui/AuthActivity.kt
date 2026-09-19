@@ -37,14 +37,44 @@ class AuthActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try {
-            if (FirebaseApp.getApps(this).isEmpty()) {
+            val firebaseApp = try {
+                FirebaseApp.getInstance()
+            } catch (_: IllegalStateException) {
                 FirebaseApp.initializeApp(this)
             }
-            auth = FirebaseAuth.getInstance()
+
+            if (firebaseApp == null) {
+                Log.e(
+                    "AuthActivity",
+                    "Firebase initialization returned null. " +
+                        "Default Firebase options are unavailable."
+                )
+                buildUi()
+                showMessage(
+                    AuthStrings.t(this, "auth_config") +
+                        " [Firebase: INIT_NO_DEFAULT_APP]"
+                )
+                return
+            }
+
+            Log.d(
+                "AuthActivity",
+                "Firebase initialized. projectId=" +
+                    firebaseApp.options.projectId +
+                    " applicationId=" +
+                    firebaseApp.options.applicationId +
+                    " package=" + packageName
+            )
+
+            auth = FirebaseAuth.getInstance(firebaseApp)
         } catch (exception: Exception) {
-            Log.e("AuthActivity", "Firebase initialization failed", exception)
+            Log.e(
+                "AuthActivity",
+                "Firebase initialization failed.",
+                exception
+            )
             buildUi()
-            showMessage(AuthStrings.t(this, "auth_config"))
+            showMessage(firebaseInitError(exception))
             return
         }
 
@@ -54,6 +84,52 @@ class AuthActivity : ComponentActivity() {
         }
 
         buildUi()
+    }
+
+    private fun firebaseInitError(error: Throwable?): String {
+        var current: Throwable? = error
+        var code = ""
+        var message = ""
+
+        while (current != null) {
+            if (current is com.google.firebase.auth.FirebaseAuthException) {
+                code = current.errorCode.orEmpty()
+                message = current.message.orEmpty()
+                break
+            }
+
+            if (message.isBlank()) {
+                message = current.message.orEmpty()
+            }
+
+            current = current.cause
+        }
+
+        val safeCode = code.ifBlank { "INIT_ERROR" }
+        val safeMessage = message
+            .replace("\\s+".toRegex(), " ")
+            .take(220)
+
+        Log.e(
+            "AuthActivity",
+            "Firebase init diagnostic. " +
+                "type=" + error?.javaClass?.name +
+                " code=" + safeCode +
+                " message=" + safeMessage,
+            error
+        )
+
+        return buildString {
+            append(AuthStrings.t(this@AuthActivity, "auth_config"))
+            append(" [Firebase: ")
+            append(safeCode)
+            append("]")
+
+            if (safeMessage.isNotBlank()) {
+                append(" ")
+                append(safeMessage)
+            }
+        }
     }
 
     private fun buildUi() {
