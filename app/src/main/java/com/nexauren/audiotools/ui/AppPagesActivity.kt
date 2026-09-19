@@ -642,10 +642,6 @@ class AppPagesActivity : ComponentActivity() {
             card.addView(row)
 
             card.setOnClickListener {
-                UsageStore.record(
-                    this,
-                    tool.id
-                )
                 openToolOrUpgrade(
                     tool,
                     card
