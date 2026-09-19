@@ -454,12 +454,16 @@ class ToolDetailActivity : ComponentActivity() {
             setOnClickListener { if (mediaRecorder == null) startRecording() else stopRecording() }
         }
         content.addView(primaryAction)
-        playbackAction = ViewKit.button(this, AppStrings.t(this, "record_play"), false, R.color.audio_red).apply {
+        playbackAction = ViewKit.button(this, AppStrings.t(this, "preview_result"), false, R.color.audio_red).apply {
             visibility = MaterialButton.GONE
-            setOnClickListener { lastOutputPath?.let { playFile(File(it)) } }
+            setOnClickListener { pendingPreviewPath?.let { playFile(File(it)) } ?: lastOutputPath?.let { playFile(File(it)) } }
         }
         content.addView(ViewKit.spacer(this, 7))
         content.addView(playbackAction)
+        content.addView(ViewKit.spacer(this, 7))
+        content.addView(ViewKit.button(this, AppStrings.t(this, "save_result"), false, R.color.audio_red).apply {
+            setOnClickListener { savePendingResult() }
+        })
         card.addView(content)
         root.addView(card)
     }
@@ -1128,9 +1132,8 @@ class ToolDetailActivity : ComponentActivity() {
     private fun startRecordingInternal() {
         releasePlayer()
         stopTimer()
-        val dir = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Recordings").apply { mkdirs() }
         val name = "AudioTools_Record_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".m4a"
-        val output = File(dir, name)
+        val output = File(cacheDir, name)
         try {
             mediaRecorder = MediaRecorder(this).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -1142,7 +1145,9 @@ class ToolDetailActivity : ComponentActivity() {
                 prepare()
                 start()
             }
-            lastOutputPath = output.absolutePath
+            lastOutputPath = null
+            pendingPreviewPath = output.absolutePath
+            pendingPreviewName = name
             recordingStartedAt = System.currentTimeMillis()
             primaryAction?.text = AppStrings.t(this, "record_stop")
             primaryAction?.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red_dark))
@@ -1174,7 +1179,8 @@ class ToolDetailActivity : ComponentActivity() {
             primaryAction?.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.audio_red))
             signalPreview?.stop()
             playbackAction?.visibility = View.VISIBLE
-            statusView?.text = AppStrings.t(this, "recording_saved")
+            playbackAction?.text = AppStrings.t(this, "preview_result")
+            statusView?.text = AppStrings.t(this, "preview_ready")
         } catch (_: Exception) {
             releaseRecorder()
             lastOutputPath?.let { File(it).delete() }
