@@ -387,4 +387,4 @@ class MainActivity : ComponentActivity() {
             }
             .show()
     }
-\n}
+}
