@@ -292,29 +292,24 @@ class AppPagesActivity : ComponentActivity() {
 
         val pages = listOf(
             Triple(
-                "Home",
-                "Voltar ao painel principal",
-                "home"
-            ),
-            Triple(
                 "Tools",
-                "Todas as ferramentas de áudio",
-                PAGE_TOOLS
+                "As seis ferramentas de áudio",
+                "tools"
             ),
             Triple(
                 "Favoritos",
                 "As ferramentas que guardaste",
-                PAGE_FAVORITES
+                "favorites"
             ),
             Triple(
                 "Histórico",
                 "O que usaste recentemente",
-                PAGE_HISTORY
+                "history"
             ),
             Triple(
                 "Estatísticas",
-                "Visão do teu uso",
-                PAGE_STATS
+                "Resumo do teu uso",
+                "stats"
             ),
             Triple(
                 "Planos",
@@ -323,13 +318,18 @@ class AppPagesActivity : ComponentActivity() {
             ),
             Triple(
                 "Me",
-                "Perfil e dados Firebase",
-                PAGE_PROFILE
+                "Perfil e identidade Firebase",
+                "profile"
+            ),
+            Triple(
+                "Armazenamento",
+                "Escolher onde os áudios serão guardados",
+                "storage"
             ),
             Triple(
                 "Suporte",
                 "Suporte, reclamações e sugestões",
-                PAGE_SUPPORT
+                "support"
             ),
             Triple(
                 "Definições",
@@ -343,7 +343,7 @@ class AppPagesActivity : ComponentActivity() {
             ),
             Triple(
                 "Changelog",
-                "Novidades e histórico de versões",
+                "Novidades e versões",
                 "changelog"
             ),
             Triple(
@@ -360,23 +360,35 @@ class AppPagesActivity : ComponentActivity() {
                         LinearLayout.HORIZONTAL
                 }
 
-            pair.forEachIndexed {
-                index,
-                item ->
+            pair.forEachIndexed { index, item ->
                 row.addView(
                     ViewKit.menuTile(
                         this,
+                        menuIcon(item.third),
                         item.first,
                         item.second,
                         tileColor(index)
                     ) {
                         when (item.third) {
-                            "home" ->
-                                startActivity(
-                                    Intent(
-                                        this,
-                                        MainActivity::class.java
-                                    )
+                            "tools" ->
+                                open(
+                                    this,
+                                    PAGE_TOOLS
+                                )
+                            "favorites" ->
+                                open(
+                                    this,
+                                    PAGE_FAVORITES
+                                )
+                            "history" ->
+                                open(
+                                    this,
+                                    PAGE_HISTORY
+                                )
+                            "stats" ->
+                                open(
+                                    this,
+                                    PAGE_STATS
                                 )
                             "plans" ->
                                 startActivity(
@@ -384,6 +396,23 @@ class AppPagesActivity : ComponentActivity() {
                                         this,
                                         UpgradeActivity::class.java
                                     )
+                                )
+                            "profile" ->
+                                open(
+                                    this,
+                                    PAGE_PROFILE
+                                )
+                            "storage" ->
+                                startActivity(
+                                    Intent(
+                                        this,
+                                        StorageActivity::class.java
+                                    )
+                                )
+                            "support" ->
+                                open(
+                                    this,
+                                    PAGE_SUPPORT
                                 )
                             "settings" ->
                                 startActivity(
@@ -399,24 +428,19 @@ class AppPagesActivity : ComponentActivity() {
                                         AccountActivity::class.java
                                     )
                                 )
-                            "about" ->
-                                startActivity(
-                                    Intent(
-                                        this,
-                                        AboutActivity::class.java
-                                    )
-                                )
-                        "changelog" ->
+                            "changelog" ->
                                 startActivity(
                                     Intent(
                                         this,
                                         ChangelogActivity::class.java
                                     )
                                 )
-                            else ->
-                                open(
-                                    this,
-                                    item.third
+                            "about" ->
+                                startActivity(
+                                    Intent(
+                                        this,
+                                        AboutActivity::class.java
+                                    )
                                 )
                         }
                     },
@@ -442,6 +466,26 @@ class AppPagesActivity : ComponentActivity() {
             )
         }
     }
+
+    private fun menuIcon(
+        page: String
+    ): String =
+        when (page) {
+            "tools" -> "♪"
+            "favorites" -> "★"
+            "history" -> "↺"
+            "stats" -> "⌁"
+            "plans" -> "◇"
+            "profile" -> "●"
+            "storage" -> "▣"
+            "support" -> "?"
+            "settings" -> "⚙"
+            "account" -> "✓"
+            "changelog" -> "v"
+            "about" -> "i"
+            else -> "•"
+        }
+
 
     private fun buildTools(
         root: LinearLayout
