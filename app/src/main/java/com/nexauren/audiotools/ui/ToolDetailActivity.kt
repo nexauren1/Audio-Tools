@@ -319,10 +319,12 @@ class ToolDetailActivity : ComponentActivity() {
         }
         val layout = TextInputLayout(this).apply {
             hint = label + " (s)"
-            boxCornerRadiusTopStart = ViewKit.dp(this@ToolDetailActivity, 14).toFloat()
-            boxCornerRadiusTopEnd = ViewKit.dp(this@ToolDetailActivity, 14).toFloat()
-            boxCornerRadiusBottomStart = ViewKit.dp(this@ToolDetailActivity, 14).toFloat()
-            boxCornerRadiusBottomEnd = ViewKit.dp(this@ToolDetailActivity, 14).toFloat()
+            setBoxCornerRadii(
+                ViewKit.dp(this@ToolDetailActivity, 14).toFloat(),
+                ViewKit.dp(this@ToolDetailActivity, 14).toFloat(),
+                ViewKit.dp(this@ToolDetailActivity, 14).toFloat(),
+                ViewKit.dp(this@ToolDetailActivity, 14).toFloat()
+            )
             addView(input)
         }
         return layout to input
