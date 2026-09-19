@@ -6,10 +6,6 @@ val keystoreFile = rootProject.file("audio-tools-release.jks")
 val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
 val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
 val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
-val hasReleaseSigning = keystoreFile.exists() &&
-    !keystorePassword.isNullOrBlank() &&
-    !keyAlias.isNullOrBlank() &&
-    !keyPassword.isNullOrBlank()
 
 android {
     namespace = "com.nexauren.audiotools"
@@ -27,23 +23,17 @@ android {
 
     signingConfigs {
         create("release") {
-            if (hasReleaseSigning) {
-                storeFile = keystoreFile
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
-            }
+            storeFile = keystoreFile
+            storePassword = keystorePassword
+            this.keyAlias = keyAlias
+            this.keyPassword = keyPassword
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = if (hasReleaseSigning) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
