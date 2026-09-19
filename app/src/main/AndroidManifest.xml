@@ -34,7 +34,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.ProDemoActivity"
+            android:name=".ui.UpgradeActivity"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -47,6 +47,10 @@
                     android:path="/complete" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.ProDemoActivity"
+            android:exported="false" />
         <activity android:name=".ui.SettingsActivity" android:exported="false" />
         <activity android:name=".ui.ToolDetailActivity" android:exported="false" />
         <activity android:name=".ui.MainActivity" android:exported="false" />
