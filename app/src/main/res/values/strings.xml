@@ -1,1 +1,4 @@
-<resources><string name="app_name">Audio Tools</string></resources>
+<resources>
+    <string name="app_name">Audio Tools</string>
+    <string name="file_provider_name">Audio Tools update files</string>
+</resources>
