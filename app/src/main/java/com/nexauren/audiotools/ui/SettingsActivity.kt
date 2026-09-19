@@ -318,6 +318,103 @@ class SettingsActivity : ComponentActivity() {
 
         root.addView(changelogCard)
 
+        root.addView(ViewKit.spacer(this, 12))
+
+        val storageCard =
+            ViewKit.card(
+                this,
+                clickable = true,
+                accentColorRes = R.color.audio_teal
+            )
+
+        storageCard.addView(
+            LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(
+                    ViewKit.dp(this@SettingsActivity, 14),
+                    ViewKit.dp(this@SettingsActivity, 14),
+                    ViewKit.dp(this@SettingsActivity, 14),
+                    ViewKit.dp(this@SettingsActivity, 14)
+                )
+
+                addView(
+                    ViewKit.iconBadge(
+                        this@SettingsActivity,
+                        "▣",
+                        R.color.audio_teal
+                    ).apply {
+                        layoutParams =
+                            LinearLayout.LayoutParams(
+                                ViewKit.dp(this@SettingsActivity, 44),
+                                ViewKit.dp(this@SettingsActivity, 44)
+                            ).apply {
+                                rightMargin =
+                                    ViewKit.dp(this@SettingsActivity, 10)
+                            }
+                    }
+                )
+
+                addView(
+                    LinearLayout(this@SettingsActivity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams =
+                            LinearLayout.LayoutParams(
+                                0,
+                                ViewGroup.LayoutParams.WRAP_CONTENT,
+                                1f
+                            )
+
+                        addView(
+                            ViewKit.title(
+                                this@SettingsActivity,
+                                "Armazenamento",
+                                16f
+                            )
+                        )
+
+                        addView(
+                            ViewKit.spacer(
+                                this@SettingsActivity,
+                                3
+                            )
+                        )
+
+                        addView(
+                            ViewKit.subtitle(
+                                this@SettingsActivity,
+                                "Escolhe a pasta pública onde os resultados serão guardados."
+                            )
+                        )
+                    }
+                )
+
+                addView(
+                    TextView(this@SettingsActivity).apply {
+                        text = "›"
+                        textSize = 24f
+                        setTextColor(
+                            ContextCompat.getColor(
+                                this@SettingsActivity,
+                                R.color.audio_teal
+                            )
+                        )
+                    }
+                )
+            }
+        )
+
+        storageCard.setOnClickListener {
+            startActivity(
+                android.content.Intent(
+                    this,
+                    StorageActivity::class.java
+                )
+            )
+        }
+
+        root.addView(storageCard)
+
         root.addView(ViewKit.spacer(this, 16))
         root.addView(section(AppStrings.t(this, "app_section")))
         root.addView(ViewKit.spacer(this, 7))
