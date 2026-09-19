@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "tools": [],
+  "news": [
+    {
+      "id": "v1-three-tools",
+      "title": "Audio Tools V1",
+      "description": "Agora com três ferramentas focadas e funcionais: Cortar, Gravar e Analisar."
+    }
+  ]
+}
