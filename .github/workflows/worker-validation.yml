@@ -41,5 +41,10 @@ jobs:
       - name: Check D1 schema
         run: |
           test -s cloudflare/schema.sql
-          grep -q "CREATE TABLE IF NOT EXISTS entitlements" cloudflare/schema.sql
-          grep -q "CREATE TABLE IF NOT EXISTS paypal_orders" cloudflare/schema.sql
+          grep -q "CREATE TABLE plans" cloudflare/schema.sql
+          grep -q "CREATE TABLE entitlements" cloudflare/schema.sql
+          grep -q "CREATE TABLE paypal_subscriptions" cloudflare/schema.sql
+          ! grep -q "paypal_orders" cloudflare/schema.sql
+          ! grep -q "credit_accounts" cloudflare/schema.sql
+          ! grep -q "credit_transactions" cloudflare/schema.sql
+          ! grep -q "tool_usage" cloudflare/schema.sql
