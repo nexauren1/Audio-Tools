@@ -7,6 +7,8 @@ object AuthStrings {
         "pt" to mapOf(
             "account" to "Conta",
             "sign_in" to "Entrar",
+"or" to "ou",
+"continue_google" to "Continuar com Google",
             "create_account" to "Criar conta",
             "welcome_back" to "Bem-vindo de volta.",
             "create_desc" to "Cria a tua conta do Audio Tools para guardar o teu perfil.",
@@ -48,11 +50,17 @@ object AuthStrings {
             "auth_internal" to "O Firebase devolveu um erro interno. Tenta novamente.",
             "reset_invalid" to "Introduz o e-mail da tua conta primeiro.",
             "profile_save_failed" to "Conta criada. O perfil será sincronizado quando houver ligação.",
-            "security_note" to "A autenticação é gerida pelo Firebase. A palavra-passe não é guardada no Audio Tools."
+            "google_cancelled" to "O login com Google foi cancelado.",
+"google_unavailable" to "Não foi possível entrar com Google agora. Verifica a ligação e tenta novamente.",
+"google_config" to "O login Google ainda precisa da configuração do certificado SHA-1 no Firebase para esta versão.",
+"google_account_conflict" to "Já existe uma conta com este endereço. Entra com o método usado anteriormente.",
+"security_note" to "A autenticação é gerida pelo Firebase. A palavra-passe não é guardada no Audio Tools."
         ),
         "en" to mapOf(
             "account" to "Account",
             "sign_in" to "Sign in",
+"or" to "or",
+"continue_google" to "Continue with Google",
             "create_account" to "Create account",
             "welcome_back" to "Welcome back.",
             "create_desc" to "Create your Audio Tools account to keep your profile.",
@@ -87,11 +95,17 @@ object AuthStrings {
             "auth_generic" to "Could not complete authentication right now.",
             "reset_invalid" to "Enter your account email first.",
             "profile_save_failed" to "Account created. The profile will sync when a connection is available.",
-            "security_note" to "Authentication is handled by Firebase. Your password is not stored by Audio Tools."
+            "google_cancelled" to "Google sign-in was cancelled.",
+"google_unavailable" to "Could not sign in with Google right now. Check your connection and try again.",
+"google_config" to "Google sign-in still needs the Android certificate SHA-1 configured in Firebase for this version.",
+"google_account_conflict" to "An account already exists with this address. Sign in using the method used before.",
+"security_note" to "Authentication is handled by Firebase. Your password is not stored by Audio Tools."
         ),
         "fr" to mapOf(
             "account" to "Compte",
             "sign_in" to "Se connecter",
+"or" to "ou",
+"continue_google" to "Continuer avec Google",
             "create_account" to "Créer un compte",
             "welcome_back" to "Bon retour.",
             "create_desc" to "Crée ton compte Audio Tools pour conserver ton profil.",
@@ -126,11 +140,17 @@ object AuthStrings {
             "auth_generic" to "Impossible de terminer l’authentification.",
             "reset_invalid" to "Saisis d’abord l’e-mail de ton compte.",
             "profile_save_failed" to "Compte créé. Le profil sera synchronisé dès que possible.",
-            "security_note" to "L’authentification est gérée par Firebase. Audio Tools ne stocke pas ton mot de passe."
+            "google_cancelled" to "La connexion Google a été annulée.",
+"google_unavailable" to "Impossible de se connecter avec Google maintenant. Vérifie ta connexion puis réessaie.",
+"google_config" to "La connexion Google nécessite encore le certificat SHA-1 Android configuré dans Firebase pour cette version.",
+"google_account_conflict" to "Un compte existe déjà avec cette adresse. Utilise la méthode de connexion précédente.",
+"security_note" to "L’authentification est gérée par Firebase. Audio Tools ne stocke pas ton mot de passe."
         ),
         "es" to mapOf(
             "account" to "Cuenta",
             "sign_in" to "Iniciar sesión",
+"or" to "o",
+"continue_google" to "Continuar con Google",
             "create_account" to "Crear cuenta",
             "welcome_back" to "Bienvenido de nuevo.",
             "create_desc" to "Crea tu cuenta de Audio Tools para conservar tu perfil.",
@@ -165,11 +185,17 @@ object AuthStrings {
             "auth_generic" to "No se pudo completar la autenticación.",
             "reset_invalid" to "Introduce primero el correo de tu cuenta.",
             "profile_save_failed" to "Cuenta creada. El perfil se sincronizará cuando haya conexión.",
-            "security_note" to "Firebase gestiona la autenticación. Audio Tools no almacena tu contraseña."
+            "google_cancelled" to "Se canceló el inicio de sesión con Google.",
+"google_unavailable" to "No se pudo iniciar sesión con Google ahora. Comprueba tu conexión e inténtalo de nuevo.",
+"google_config" to "El inicio de sesión de Google todavía necesita configurar el certificado SHA-1 de Android en Firebase para esta versión.",
+"google_account_conflict" to "Ya existe una cuenta con esta dirección. Inicia sesión con el método anterior.",
+"security_note" to "Firebase gestiona la autenticación. Audio Tools no almacena tu contraseña."
         ),
         "de" to mapOf(
             "account" to "Konto",
             "sign_in" to "Anmelden",
+"or" to "oder",
+"continue_google" to "Mit Google fortfahren",
             "create_account" to "Konto erstellen",
             "welcome_back" to "Willkommen zurück.",
             "create_desc" to "Erstelle dein Audio-Tools-Konto für dein Profil.",
@@ -204,7 +230,11 @@ object AuthStrings {
             "auth_generic" to "Anmeldung konnte nicht abgeschlossen werden.",
             "reset_invalid" to "Gib zuerst die E-Mail deines Kontos ein.",
             "profile_save_failed" to "Konto erstellt. Das Profil wird bei nächster Verbindung synchronisiert.",
-            "security_note" to "Firebase verwaltet die Authentifizierung. Audio Tools speichert dein Passwort nicht."
+            "google_cancelled" to "Die Google-Anmeldung wurde abgebrochen.",
+"google_unavailable" to "Google-Anmeldung ist gerade nicht möglich. Prüfe deine Verbindung und versuche es erneut.",
+"google_config" to "Für die Google-Anmeldung muss das Android-SHA-1-Zertifikat dieser Version noch in Firebase konfiguriert werden.",
+"google_account_conflict" to "Für diese Adresse existiert bereits ein Konto. Verwende die bisherige Anmeldemethode.",
+"security_note" to "Firebase verwaltet die Authentifizierung. Audio Tools speichert dein Passwort nicht."
         )
     )
 
