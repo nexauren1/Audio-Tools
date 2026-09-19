@@ -1,11 +1,11 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "tools": [],
   "news": [
     {
-      "id": "v0.5.0-preview-workflow",
-      "title": "Pré-visualização antes de guardar",
-      "description": "Corte, conversão, extração e gravação agora permitem ouvir o resultado antes de o guardar no dispositivo."
+      "id": "v0.6.0-accounts",
+      "title": "Contas do Audio Tools",
+      "description": "O Audio Tools agora inclui criação de conta, login, sessão persistente, recuperação de palavra-passe e perfil sincronizado com Firebase."
     }
   ]
 }

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.firebase.auth.FirebaseAuth
 import com.nexauren.audiotools.BuildConfig
 import com.nexauren.audiotools.R
 import com.nexauren.audiotools.update.UpdateInfo
@@ -59,6 +60,76 @@ class SettingsActivity : ComponentActivity() {
             }
         })
         root.addView(header)
+
+        root.addView(ViewKit.spacer(this, 20))
+        root.addView(section(AuthStrings.t(this, "account")))
+        root.addView(ViewKit.spacer(this, 7))
+
+        val accountCard = ViewKit.card(this, clickable = true, accentColorRes = R.color.audio_blue)
+        val accountContent = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(
+                ViewKit.dp(this@SettingsActivity, 15),
+                ViewKit.dp(this@SettingsActivity, 14),
+                ViewKit.dp(this@SettingsActivity, 15),
+                ViewKit.dp(this@SettingsActivity, 14)
+            )
+        }
+
+        val user = FirebaseAuth.getInstance().currentUser
+        val name = user?.displayName?.trim().takeUnless { it.isNullOrBlank() }
+            ?: AuthStrings.t(this@SettingsActivity, "profile")
+        val email = user?.email.orEmpty()
+
+        accountContent.addView(ViewKit.iconBadge(
+            this,
+            "AT",
+            R.color.audio_blue
+        ).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewKit.dp(this@SettingsActivity, 46),
+                ViewKit.dp(this@SettingsActivity, 46)
+            ).apply {
+                rightMargin = ViewKit.dp(this@SettingsActivity, 11)
+            }
+        })
+
+        val accountText = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+        }
+        accountText.addView(TextView(this).apply {
+            text = name
+            textSize = 14.5f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.audio_text))
+        })
+        accountText.addView(ViewKit.spacer(this@SettingsActivity, 3))
+        accountText.addView(TextView(this).apply {
+            text = email
+            textSize = 11f
+            setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.audio_muted))
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+        accountContent.addView(accountText)
+
+        accountContent.addView(TextView(this).apply {
+            text = "›"
+            textSize = 25f
+            setTextColor(ContextCompat.getColor(this@SettingsActivity, R.color.audio_blue))
+        })
+
+        accountCard.addView(accountContent)
+        accountCard.setOnClickListener {
+            startActivity(android.content.Intent(this, AccountActivity::class.java))
+        }
+        root.addView(accountCard)
 
         root.addView(ViewKit.spacer(this, 20))
         root.addView(section(AppStrings.t(this, "language")))

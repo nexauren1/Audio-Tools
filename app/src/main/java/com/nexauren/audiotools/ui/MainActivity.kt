@@ -30,6 +30,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (com.google.firebase.auth.FirebaseAuth.getInstance().currentUser == null) {
+            startActivity(
+                android.content.Intent(this, AuthActivity::class.java).apply {
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                        android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+            )
+            finish()
+            return
+        }
+
         NotificationCenter.createChannels(this)
         UpdateScheduler.schedule(this)
         requestNotificationsIfNeeded()
