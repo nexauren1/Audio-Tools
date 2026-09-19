@@ -356,6 +356,60 @@ class ProDemoActivity : ComponentActivity() {
 
         content.addView(action)
 
+        content.addView(
+            ViewKit.spacer(
+                this,
+                8
+            )
+        )
+
+        content.addView(
+            ViewKit.button(
+                this,
+                "Copiar resultado",
+                false,
+                R.color.audio_purple
+            ).apply {
+                setOnClickListener {
+                    val value =
+                        status?.text
+                            ?.toString()
+                            ?.trim()
+                            .orEmpty()
+
+                    if (
+                        value.isBlank() ||
+                        value == "A verificar o acesso Pro…"
+                    ) {
+                        Toast.makeText(
+                            this@ProDemoActivity,
+                            "Ainda não existe um resultado para copiar.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnClickListener
+                    }
+
+                    val clipboard =
+                        getSystemService(
+                            Context.CLIPBOARD_SERVICE
+                        ) as android.content.ClipboardManager
+
+                    clipboard.setPrimaryClip(
+                        android.content.ClipData.newPlainText(
+                            "Audio Tools",
+                            value
+                        )
+                    )
+
+                    Toast.makeText(
+                        this@ProDemoActivity,
+                        "Resultado copiado.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        )
+
         card.addView(content)
         root.addView(card)
 
@@ -417,6 +471,10 @@ class ProDemoActivity : ComponentActivity() {
                             )
                         action?.isEnabled =
                             true
+                        UsageStore.record(
+                            this@ProDemoActivity,
+                            "pro-inspector"
+                        )
                     } else {
                         openUpgrade()
                     }
