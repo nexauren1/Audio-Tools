@@ -96,7 +96,7 @@ object SupportEmailComposer {
             Intent(
                 Intent.ACTION_SEND
             ).apply {
-                type = "text/plain"
+                this.type = "text/plain"
 
                 putExtra(
                     Intent.EXTRA_EMAIL,
