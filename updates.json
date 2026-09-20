@@ -1,6 +1,11 @@
 {
-  "version": "0.11.0",
+  "version": "0.12.0",
   "tools": [
+    {
+      "id": "v0.12.0-support-email",
+      "title": "Suporte por email",
+      "description": "Suporte, reclamações e sugestões abrem o aplicativo de email com os dados da conta já preenchidos."
+    },
     {
       "id": "v0.11.0-ui",
       "title": "Nova navegação e Home",
