@@ -9,10 +9,7 @@
   "secrets": {
     "required": [
       "PAYPAL_CLIENT_ID",
-      "PAYPAL_CLIENT_SECRET",
-      "RESEND_API_KEY",
-      "SUPPORT_TO_EMAIL",
-      "RESEND_FROM_EMAIL"
+      "PAYPAL_CLIENT_SECRET"
     ]
   },
   "d1_databases": [
