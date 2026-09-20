@@ -1,5 +1,15 @@
 # Audio Tools — Changelog
 
+## 0.12.0 — Suporte por email
+
+### Suporte
+- Formulário de suporte, reclamações e sugestões agora abre o aplicativo de email do utilizador.
+- O destinatário é pré-configurado como nexaurenstore@gmail.com.
+- O email é preenchido automaticamente com a mensagem e os dados disponíveis da conta Firebase.
+- O utilizador confirma o envio no Gmail, Outlook ou outro aplicativo de email instalado.
+- Removida a dependência de Resend e do envio de suporte pelo Cloudflare Worker.
+- Mantidos Firebase Authentication, PayPal, planos e entitlement sem alterações.
+
 ## 0.11.0 — Home e armazenamento
 
 ### Interface
