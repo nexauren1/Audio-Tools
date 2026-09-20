@@ -562,19 +562,6 @@ class UpgradeActivity : ComponentActivity() {
             } catch (error: Exception) {
                 AnalyticsTracker.plansLoadFailed(this@UpgradeActivity, error)
                 mainHandler.post {
-                    AnalyticsTracker.paymentCompleted(
-                        this@UpgradeActivity,
-                        pendingPlanId ?: entitlement.plan,
-                        entitlement.subscriptionId,
-                        pendingPriceUsd
-                    )
-                    AnalyticsTracker.entitlementLoaded(
-                        this@UpgradeActivity,
-                        entitlement.plan,
-                        "payment_activation"
-                    )
-                    pendingPlanId = null
-                    pendingPriceUsd = null
                     loading?.visibility =
                         View.GONE
 
@@ -1037,6 +1024,19 @@ class UpgradeActivity : ComponentActivity() {
                 )
 
                 mainHandler.post {
+                    AnalyticsTracker.paymentCompleted(
+                        this@UpgradeActivity,
+                        pendingPlanId ?: entitlement.plan,
+                        entitlement.subscriptionId,
+                        pendingPriceUsd
+                    )
+                    AnalyticsTracker.entitlementLoaded(
+                        this@UpgradeActivity,
+                        entitlement.plan,
+                        "payment_activation"
+                    )
+                    pendingPlanId = null
+                    pendingPriceUsd = null
                     loading?.visibility =
                         View.GONE
 
