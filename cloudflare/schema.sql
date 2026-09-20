@@ -1,3 +1,4 @@
+-- Support messages are sent directly from the Android email app; no support table is required.
 PRAGMA foreign_keys = ON;
 
 DROP TABLE IF EXISTS plans;
