@@ -42,10 +42,19 @@ jobs:
       - name: Check D1 schema
         run: |
           test -s cloudflare/schema.sql
+          test -s cloudflare/migrations/003_remove_support_requests.sql
+          grep -q "DROP TABLE IF EXISTS support_requests" cloudflare/migrations/003_remove_support_requests.sql
           grep -q "CREATE TABLE plans" cloudflare/schema.sql
           grep -q "CREATE TABLE entitlements" cloudflare/schema.sql
           grep -q "CREATE TABLE paypal_subscriptions" cloudflare/schema.sql
-          grep -q "CREATE TABLE support_requests" cloudflare/schema.sql
+          ! grep -q "support_requests" cloudflare/schema.sql
+          ! grep -q "RESEND" worker.js
+          ! grep -q "resend" worker.js
+          ! grep -q "/api/support/contact" worker.js
+          ! grep -q "sendSupportContact" worker.js
+          ! grep -q "SUPPORT_TO_EMAIL" wrangler.jsonc
+          ! grep -q "RESEND_API_KEY" wrangler.jsonc
+          ! grep -q "RESEND_FROM_EMAIL" wrangler.jsonc
           ! grep -q "paypal_orders" cloudflare/schema.sql
           ! grep -q "credit_accounts" cloudflare/schema.sql
           ! grep -q "credit_transactions" cloudflare/schema.sql
