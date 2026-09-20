@@ -1551,7 +1551,6 @@ class AppPagesActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
 
         root.addView(sendButton)
 
