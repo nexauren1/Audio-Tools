@@ -42,7 +42,7 @@ android {
         buildConfigField(
             "String",
             "PAYMENTS_BASE_URL",
-            ""https://audio-tools.nexaurenstore.workers.dev""
+            "\"https://audio-tools.nexaurenstore.workers.dev\""
         )
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
