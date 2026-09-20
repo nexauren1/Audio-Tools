@@ -1393,6 +1393,7 @@ class AppPagesActivity : ComponentActivity() {
         )
     }
 
+    // Support form: compile-validation touchpoint for the production release pipeline.
     private fun buildSupport(
         root: LinearLayout
     ) {
