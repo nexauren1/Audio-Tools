@@ -16,6 +16,7 @@ import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import kotlinx.coroutines.launch
 
 class AccountActivity : ComponentActivity() {
@@ -195,6 +196,7 @@ class AccountActivity : ComponentActivity() {
             .setMessage(AuthStrings.t(this, "logout_desc"))
             .setNegativeButton(AuthStrings.t(this, "cancel"), null)
             .setPositiveButton(AuthStrings.t(this, "logout")) { _, _ ->
+                AnalyticsTracker.logout(this)
                 auth.signOut()
                 lifecycleScope.launch {
                     try {

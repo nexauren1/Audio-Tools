@@ -36,6 +36,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import kotlinx.coroutines.launch
 
 class AuthActivity : ComponentActivity() {
@@ -98,6 +99,7 @@ class AuthActivity : ComponentActivity() {
         }
 
         buildUi()
+        AnalyticsTracker.authScreenViewed(this)
     }
 
     private fun firebaseInitError(error: Throwable?): String {
@@ -452,13 +454,22 @@ class AuthActivity : ComponentActivity() {
                 return
             }
             setLoading(true)
+            AnalyticsTracker.authAttempt(this, "email", "sign_up")
             auth.createUserWithEmailAndPassword(emailValue, passwordValue)
                 .addOnCompleteListener { task ->
                     if (!task.isSuccessful) {
                         setLoading(false)
+                        AnalyticsTracker.authFailure(this@AuthActivity, "email", "sign_up", task.exception)
                         showMessage(authError(task.exception))
                         return@addOnCompleteListener
                     }
+
+                    AnalyticsTracker.authSuccess(
+                        this@AuthActivity,
+                        "email",
+                        "sign_up",
+                        auth.currentUser?.uid
+                    )
 
                     val user = auth.currentUser
                     if (user == null) {
@@ -478,14 +489,21 @@ class AuthActivity : ComponentActivity() {
                 }
         } else {
             setLoading(true)
+            AnalyticsTracker.authAttempt(this, "email", "sign_in")
             auth.signInWithEmailAndPassword(emailValue, passwordValue)
                 .addOnCompleteListener { task ->
-                    if (!task.isSuccessful) {
-                        setLoading(false)
-                        showMessage(authError(task.exception))
+auth.signInWithEmailAndPassword(emailValue, passwordValue)
+                .addOnCompleteListener { task ->
+
                         return@addOnCompleteListener
                     }
 
+                    AnalyticsTracker.authSuccess(
+                        this@AuthActivity,
+                        "email",
+                        "sign_in",
+                        auth.currentUser?.uid
+                    )
                     auth.currentUser?.let { saveProfile(it, it.displayName.orEmpty()) }
                     openMain()
                 }
@@ -495,6 +513,7 @@ class AuthActivity : ComponentActivity() {
     private fun signInWithGoogle() {
         hideMessage()
         setLoading(true)
+        AnalyticsTracker.authAttempt(this, "google", "sign_in")
 
         lifecycleScope.launch {
             try {
@@ -520,6 +539,7 @@ class AuthActivity : ComponentActivity() {
                         .addOnCompleteListener { task ->
                             if (!task.isSuccessful) {
                                 setLoading(false)
+                                AnalyticsTracker.authFailure(this@AuthActivity, "google", "sign_in", task.exception)
                                 showMessage(googleFirebaseError(task.exception))
                                 return@addOnCompleteListener
                             }
@@ -531,6 +551,12 @@ class AuthActivity : ComponentActivity() {
                                 return@addOnCompleteListener
                             }
 
+                            AnalyticsTracker.authSuccess(
+                                this@AuthActivity,
+                                "google",
+                                "sign_in",
+                                user.uid
+                            )
                             saveProfile(user, user.displayName.orEmpty())
                             openMain()
                         }
@@ -540,13 +566,16 @@ class AuthActivity : ComponentActivity() {
                 }
             } catch (error: GoogleIdTokenParsingException) {
                 setLoading(false)
+                AnalyticsTracker.authFailure(this@AuthActivity, "google", "sign_in", error)
                 Log.e("AuthActivity", "Google credential parsing failed.", error)
                 showMessage(AuthStrings.t(this@AuthActivity, "google_unavailable"))
             } catch (error: GetCredentialException) {
                 setLoading(false)
+                AnalyticsTracker.authFailure(this@AuthActivity, "google", "sign_in", error)
                 showMessage(googleCredentialError(error))
             } catch (error: IllegalStateException) {
                 setLoading(false)
+                AnalyticsTracker.authFailure(this@AuthActivity, "google", "sign_in", error)
                 Log.e("AuthActivity", "Google authentication configuration failed.", error)
                 showMessage(AuthStrings.t(this@AuthActivity, "google_config"))
             } catch (error: Exception) {
@@ -644,16 +673,19 @@ class AuthActivity : ComponentActivity() {
         }
 
         forgotButton?.isEnabled = false
+        AnalyticsTracker.passwordResetRequested(this)
         auth.sendPasswordResetEmail(emailValue)
             .addOnCompleteListener {
                 forgotButton?.isEnabled = true
                 if (it.isSuccessful) {
+                    AnalyticsTracker.passwordResetResult(this@AuthActivity, true)
                     Toast.makeText(
                         this,
                         AuthStrings.t(this, "reset_sent"),
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
+                    AnalyticsTracker.passwordResetResult(this@AuthActivity, false, it.exception)
                     showMessage(authError(it.exception))
                 }
             }

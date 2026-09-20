@@ -32,6 +32,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.storage.NexaurenStorage
@@ -52,6 +53,7 @@ class ToolDetailActivity : ComponentActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val filePicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@registerForActivityResult
+        AnalyticsTracker.toolFileSelected(this, activeToolId)
         try {
             contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         } catch (_: SecurityException) {
@@ -87,7 +89,10 @@ class ToolDetailActivity : ComponentActivity() {
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) startRecordingInternal()
-            else statusView?.text = AppStrings.t(this, "permission_mic")
+            else {
+                AnalyticsTracker.toolFailed(this, "recorder", "microphone_permission")
+                statusView?.text = AppStrings.t(this, "permission_mic")
+            }
         }
 
     private var activeToolId: String = ""
@@ -126,6 +131,11 @@ class ToolDetailActivity : ComponentActivity() {
             return
         }
 
+        AnalyticsTracker.toolOpened(
+            this,
+            tool.id,
+            tool.requiredPlan
+        )
         UsageStore.record(
             this,
             tool.id
@@ -243,6 +253,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun shareLastResult() {
+        AnalyticsTracker.resultShareOpened(this, activeToolId)
         val savedUri = lastOutputUri
 
         if (savedUri != null) {
@@ -801,6 +812,7 @@ class ToolDetailActivity : ComponentActivity() {
         previewStartMs = startMs
         previewEndMs = endMs
         primaryAction?.isEnabled = false
+        AnalyticsTracker.toolProcessStarted(this, "cut", "cut")
         circuit.start()
         statusView?.text = "A processar o corte…"
 
@@ -846,11 +858,13 @@ class ToolDetailActivity : ComponentActivity() {
                         View.VISIBLE
                     playbackAction?.text =
                         "▶  Ouvir resultado"
+                    AnalyticsTracker.toolCompleted(this@ToolDetailActivity, "cut", "cut")
                     statusView?.text =
                         "Resultado pronto. Agora podes ouvir e guardar."
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mainHandler.post {
+                    AnalyticsTracker.toolFailed(this@ToolDetailActivity, "cut", "cut", error)
                     circuit.stop()
                     primaryAction?.isEnabled = true
                     statusView?.text =
@@ -978,6 +992,7 @@ class ToolDetailActivity : ComponentActivity() {
         circuit: CircuitProgressView
     ) {
         primaryAction?.isEnabled = false
+        AnalyticsTracker.toolProcessStarted(this, "extract", "extract")
         circuit.start()
         statusView?.text = when (LanguageManager.get(this)) { "en" -> "Extracting audio…"; "fr" -> "Extraction de l’audio…"; "es" -> "Extrayendo audio…"; "de" -> "Audio wird extrahiert…"; else -> "A extrair áudio…" }
         worker.execute {
@@ -999,6 +1014,7 @@ class ToolDetailActivity : ComponentActivity() {
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
                     playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
+                    AnalyticsTracker.toolCompleted(this@ToolDetailActivity, "extract", "extract")
                     statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
                         "en" -> "Extraction complete"
                         "fr" -> "Extraction terminée"
@@ -1007,8 +1023,9 @@ class ToolDetailActivity : ComponentActivity() {
                         else -> "Extração concluída"
                     } + " • " + output.name
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mainHandler.post {
+                    AnalyticsTracker.toolFailed(this@ToolDetailActivity, "extract", "extract", error)
                     circuit.stop()
                     primaryAction?.isEnabled = true
                     statusView?.text = when (LanguageManager.get(this@ToolDetailActivity)) {
@@ -1068,6 +1085,7 @@ class ToolDetailActivity : ComponentActivity() {
         circuit: CircuitProgressView
     ) {
         primaryAction?.isEnabled = false
+        AnalyticsTracker.toolProcessStarted(this, "convert", "convert_" + target)
         circuit.start()
         statusView?.text = AppStrings.t(this, "conversion_progress")
         worker.execute {
@@ -1088,10 +1106,12 @@ class ToolDetailActivity : ComponentActivity() {
                     primaryAction?.isEnabled = true
                     playbackAction?.visibility = View.VISIBLE
                     playbackAction?.text = AppStrings.t(this@ToolDetailActivity, "preview_result")
+                    AnalyticsTracker.toolCompleted(this@ToolDetailActivity, "convert", "convert_" + target)
                     statusView?.text = AppStrings.t(this@ToolDetailActivity, "preview_ready") + " • " + output.name
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mainHandler.post {
+                    AnalyticsTracker.toolFailed(this@ToolDetailActivity, "convert", "convert_" + target, error)
                     circuit.stop()
                     primaryAction?.isEnabled = true
                     statusView?.text =
@@ -1306,6 +1326,8 @@ class ToolDetailActivity : ComponentActivity() {
                     )
 
                 mainHandler.post {
+                    AnalyticsTracker.toolCompleted(this@ToolDetailActivity, activeToolId, "save")
+                    AnalyticsTracker.resultSaved(this@ToolDetailActivity, activeToolId)
                     lastOutputUri =
                         saved.uri
                     lastOutputPath =
@@ -1317,8 +1339,9 @@ class ToolDetailActivity : ComponentActivity() {
                             " - Nexauren • " +
                             saved.name
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mainHandler.post {
+                    AnalyticsTracker.toolFailed(this@ToolDetailActivity, activeToolId, "save", error)
                     processingView?.stop()
                     statusView?.text =
                         "Não foi possível guardar o resultado nesta pasta."
@@ -1474,10 +1497,12 @@ class ToolDetailActivity : ComponentActivity() {
 
         worker.execute {
             try {
+                AnalyticsTracker.toolProcessStarted(this@ToolDetailActivity, "analyzer", "analyze")
                 val report =
                     analyzeAudio(uri)
 
                 mainHandler.post {
+                    AnalyticsTracker.toolCompleted(this@ToolDetailActivity, "analyzer", "analyze")
                     processingView?.stop()
                     statusView?.text = report
                     playbackAction?.visibility =
@@ -1485,8 +1510,9 @@ class ToolDetailActivity : ComponentActivity() {
                     playbackAction?.text =
                         "▶  Ouvir original"
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 mainHandler.post {
+                    AnalyticsTracker.toolFailed(this@ToolDetailActivity, "analyzer", "analyze", error)
                     processingView?.stop()
                     statusView?.text =
                         AppStrings.t(
@@ -1559,6 +1585,7 @@ class ToolDetailActivity : ComponentActivity() {
         val output = File(cacheDir, name)
         try {
             processingView?.start()
+            AnalyticsTracker.toolProcessStarted(this, "recorder", "record")
 
             mediaRecorder = MediaRecorder(this).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -1593,6 +1620,7 @@ class ToolDetailActivity : ComponentActivity() {
             output.delete()
             releaseRecorder()
             processingView?.stop()
+            AnalyticsTracker.toolFailed(this, "recorder", "record")
             statusView?.text =
                 "Não foi possível iniciar a gravação."
         }
@@ -1610,8 +1638,10 @@ class ToolDetailActivity : ComponentActivity() {
             processingView?.stop()
             playbackAction?.visibility = View.VISIBLE
             playbackAction?.text = AppStrings.t(this, "preview_result")
+            AnalyticsTracker.toolCompleted(this, "recorder", "record")
             statusView?.text = AppStrings.t(this, "preview_ready")
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            AnalyticsTracker.toolFailed(this, "recorder", "record_stop", error)
             releaseRecorder()
             lastOutputPath?.let { File(it).delete() }
             lastOutputPath = null
@@ -1623,6 +1653,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun playFile(file: File) {
+        AnalyticsTracker.resultPlayed(this, activeToolId)
         if (!file.exists()) {
             statusView?.text = AppStrings.t(this, "not_available")
             return
@@ -1643,6 +1674,7 @@ class ToolDetailActivity : ComponentActivity() {
     }
 
     private fun playUri(uri: Uri) {
+        AnalyticsTracker.resultPlayed(this, activeToolId)
         releasePlayer()
         mediaPlayer = MediaPlayer().apply {
             setDataSource(this@ToolDetailActivity, uri)

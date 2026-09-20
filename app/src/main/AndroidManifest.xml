@@ -48,6 +48,10 @@
                     android:scheme="audiotools"
                     android:host="paypal"
                     android:path="/complete" />
+                <data
+                    android:scheme="audiotools"
+                    android:host="paypal"
+                    android:path="/cancel" />
             </intent-filter>
         </activity>
 

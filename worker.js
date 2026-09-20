@@ -2046,6 +2046,10 @@ function cancelPage() {
     "max-width:560px;margin:auto'>" +
     "<h1>Assinatura cancelada</h1>" +
     "<p>Nenhuma nova assinatura foi ativada.</p>" +
+    "<p><a href='audiotools://paypal/cancel' " +
+    "style='display:inline-block;padding:14px 18px;" +
+    "border-radius:12px;background:#2F6BFF;color:#fff;" +
+    "text-decoration:none'>Voltar ao Audio Tools</a></p>" +
     "</body></html>"
   );
 }

@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.android.material.button.MaterialButton
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import com.nexauren.audiotools.payments.Entitlement
 import com.nexauren.audiotools.payments.PaymentClient
 import com.nexauren.audiotools.payments.PlanInfo
@@ -40,6 +41,9 @@ class UpgradeActivity : ComponentActivity() {
 
     private var loading:
         ProgressBar? = null
+
+    private var pendingPlanId: String? = null
+    private var pendingPriceUsd: Double? = null
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -67,6 +71,7 @@ class UpgradeActivity : ComponentActivity() {
             return
         }
 
+        AnalyticsTracker.plansViewed(this)
         buildUi()
         handlePaymentReturn(intent)
         loadData()
@@ -547,13 +552,29 @@ class UpgradeActivity : ComponentActivity() {
                         .getEntitlement()
 
                 mainHandler.post {
+                    AnalyticsTracker.plansLoaded(this@UpgradeActivity, plans.size)
+                    AnalyticsTracker.entitlementLoaded(this@UpgradeActivity, entitlement.plan, "upgrade")
                     render(
                         plans,
                         entitlement
                     )
                 }
             } catch (error: Exception) {
+                AnalyticsTracker.plansLoadFailed(this@UpgradeActivity, error)
                 mainHandler.post {
+                    AnalyticsTracker.paymentCompleted(
+                        this@UpgradeActivity,
+                        pendingPlanId ?: entitlement.plan,
+                        entitlement.subscriptionId,
+                        pendingPriceUsd
+                    )
+                    AnalyticsTracker.entitlementLoaded(
+                        this@UpgradeActivity,
+                        entitlement.plan,
+                        "payment_activation"
+                    )
+                    pendingPlanId = null
+                    pendingPriceUsd = null
                     loading?.visibility =
                         View.GONE
 
@@ -833,6 +854,8 @@ class UpgradeActivity : ComponentActivity() {
             plan.id != currentPlan
 
         button.setOnClickListener {
+            AnalyticsTracker.planSelected(this, plan.id)
+            AnalyticsTracker.checkoutStarted(this, plan.id, plan.priceUsd)
             startSubscription(
                 plan,
                 button
@@ -888,6 +911,8 @@ class UpgradeActivity : ComponentActivity() {
     ) {
         button.isEnabled =
             false
+        pendingPlanId = plan.id
+        pendingPriceUsd = plan.priceUsd
         button.text =
             "A preparar PayPal…"
 
@@ -901,6 +926,8 @@ class UpgradeActivity : ComponentActivity() {
 
                 mainHandler.post {
                     try {
+                        AnalyticsTracker.checkoutCreated(this@UpgradeActivity, plan.id)
+                        AnalyticsTracker.checkoutOpened(this@UpgradeActivity, plan.id)
                         startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
@@ -929,6 +956,7 @@ class UpgradeActivity : ComponentActivity() {
                     }
                 }
             } catch (error: Exception) {
+                AnalyticsTracker.checkoutFailed(this@UpgradeActivity, plan.id, "create_subscription", error)
                 mainHandler.post {
                     button.isEnabled =
                         true
@@ -953,9 +981,17 @@ class UpgradeActivity : ComponentActivity() {
 
         if (
             data.scheme != "audiotools" ||
-            data.host != "paypal" ||
-            data.path != "/complete"
+            data.host != "paypal"
         ) {
+            return
+        }
+
+        if (data.path == "/cancel") {
+            AnalyticsTracker.paymentCancelled(this)
+            return
+        }
+
+        if (data.path != "/complete") {
             return
         }
 
@@ -963,6 +999,11 @@ class UpgradeActivity : ComponentActivity() {
             data.getQueryParameter(
                 "subscription_id"
             ).orEmpty()
+
+        AnalyticsTracker.paymentReturnReceived(
+            this,
+            subscriptionId.isNotBlank()
+        )
 
         if (
             subscriptionId.isBlank()
@@ -980,6 +1021,7 @@ class UpgradeActivity : ComponentActivity() {
     ) {
         loading?.visibility =
             View.VISIBLE
+        AnalyticsTracker.paymentActivationStarted(this)
 
         executor.execute {
             try {
@@ -1019,6 +1061,7 @@ class UpgradeActivity : ComponentActivity() {
                     loadData()
                 }
             } catch (error: Exception) {
+                AnalyticsTracker.paymentActivationFailed(this@UpgradeActivity, error)
                 mainHandler.post {
                     loading?.visibility =
                         View.GONE

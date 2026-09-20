@@ -1,5 +1,17 @@
 # Audio Tools — Changelog
 
+## 0.14.0 — Analytics de produto
+
+### Analytics
+- Instrumentação de autenticação: tentativa, sucesso, falha, recuperação de palavra-passe e logout.
+- Instrumentação das ferramentas: abertura, seleção de ficheiro, processamento, conclusão, falha, reprodução, guardar e partilha.
+- Instrumentação de navegação, favoritos e acesso a ferramentas Pro.
+- Instrumentação de planos e entitlement.
+- Funil PayPal completo: seleção do plano, início do checkout, criação, abertura, retorno, cancelamento, ativação e pagamento concluído.
+- Evento padrão de compra quando o preço da assinatura está disponível.
+- Email, nome e outros dados pessoais não são enviados como parâmetros dos eventos personalizados.
+
+
 ## 0.13.0 — Firebase Analytics
 
 ### Firebase

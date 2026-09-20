@@ -3,6 +3,7 @@ package com.nexauren.audiotools
 import android.app.Application
 import android.util.Log
 import com.google.firebase.FirebaseApp
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import com.nexauren.audiotools.notifications.NotificationCenter
 import com.nexauren.audiotools.update.UpdateScheduler
 
@@ -21,6 +22,8 @@ class AudioToolsApplication : Application() {
                 exception
             )
         }
+
+        AnalyticsTracker.appStarted(this)
 
         NotificationCenter.createChannels(this)
         UpdateScheduler.schedule(this)

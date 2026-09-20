@@ -1,6 +1,11 @@
 {
-  "version": "0.13.0",
+  "version": "0.14.0",
   "tools": [
+    {
+      "id": "v0.14.0-analytics-funnel",
+      "title": "Analytics de produto",
+      "description": "Eventos do funil desde autenticação e utilização das ferramentas até checkout, retorno do PayPal, cancelamento e pagamento concluído."
+    },
     {
       "id": "v0.13.0-firebase-analytics",
       "title": "Firebase Analytics",

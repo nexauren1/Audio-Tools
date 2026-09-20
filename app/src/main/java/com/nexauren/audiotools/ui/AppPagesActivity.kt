@@ -27,6 +27,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.payments.PaymentClient
@@ -98,10 +99,15 @@ class AppPagesActivity : ComponentActivity() {
             return
         }
 
-        render(
+        val page =
             intent.getStringExtra(EXTRA_PAGE)
                 ?: PAGE_MENU
+
+        AnalyticsTracker.screenViewed(
+            this,
+            page
         )
+        render(page)
     }
 
     override fun onDestroy() {
@@ -1757,9 +1763,16 @@ class AppPagesActivity : ComponentActivity() {
                 "Favorito"
             ).apply {
                 setOnClickListener {
-                    UsageStore.toggleFavorite(
+                    val nowFavorite =
+                        UsageStore.toggleFavorite(
+                            this@AppPagesActivity,
+                            tool.id
+                        )
+
+                    AnalyticsTracker.favoriteToggled(
                         this@AppPagesActivity,
-                        tool.id
+                        tool.id,
+                        nowFavorite
                     )
 
                     render(
@@ -1890,6 +1903,12 @@ class AppPagesActivity : ComponentActivity() {
                 val entitlement =
                     PaymentClient.getEntitlement()
 
+                AnalyticsTracker.entitlementLoaded(
+                    this@AppPagesActivity,
+                    entitlement.plan,
+                    "tool_access_check"
+                )
+
                 uiHandler.post {
                     source.isEnabled = true
 
@@ -1908,7 +1927,12 @@ class AppPagesActivity : ComponentActivity() {
                         )
                     }
                 }
-            } catch (_: Exception) {
+            } catch (error: Exception) {
+                AnalyticsTracker.toolAccessCheckFailed(
+                    this@AppPagesActivity,
+                    tool.id,
+                    error
+                )
                 uiHandler.post {
                     source.isEnabled = true
 

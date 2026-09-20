@@ -20,6 +20,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.nexauren.audiotools.R
+import com.nexauren.audiotools.analytics.AnalyticsTracker
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -35,6 +36,7 @@ class ProDemoActivity : ComponentActivity() {
             ActivityResultContracts.OpenDocument()
         ) { uri ->
             if (uri != null) {
+                AnalyticsTracker.toolFileSelected(this, "pro-inspector")
                 analyze(uri)
             }
         }
@@ -78,6 +80,7 @@ class ProDemoActivity : ComponentActivity() {
             return
         }
 
+        AnalyticsTracker.toolOpened(this, "pro-inspector", "PRO")
         buildUi()
         prepareAccess()
     }
@@ -388,6 +391,7 @@ class ProDemoActivity : ComponentActivity() {
                             Context.CLIPBOARD_SERVICE
                         ) as android.content.ClipboardManager
 
+                    AnalyticsTracker.resultCopied(this@ProDemoActivity, "pro-inspector")
                     clipboard.setPrimaryClip(
                         android.content.ClipData.newPlainText(
                             "Audio Tools",
@@ -474,6 +478,7 @@ class ProDemoActivity : ComponentActivity() {
         selectedUri = uri
 
         processing?.start()
+        AnalyticsTracker.toolProcessStarted(this, "pro-inspector", "inspect")
 
         action?.isEnabled =
             false
@@ -492,6 +497,7 @@ class ProDemoActivity : ComponentActivity() {
                     action?.isEnabled =
                         true
 
+                    AnalyticsTracker.toolCompleted(this@ProDemoActivity, "pro-inspector", "inspect")
                     UsageStore.record(
                         this@ProDemoActivity,
                         "pro-inspector"
@@ -507,6 +513,7 @@ class ProDemoActivity : ComponentActivity() {
                     action?.isEnabled =
                         true
 
+                    AnalyticsTracker.toolFailed(this@ProDemoActivity, "pro-inspector", "inspect", error)
                     status?.text =
                         "Não foi possível analisar este ficheiro."
                 }
