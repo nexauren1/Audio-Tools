@@ -1,5 +1,14 @@
 # Audio Tools — Changelog
 
+## 0.13.0 — Firebase Analytics
+
+### Firebase
+- Adicionado o SDK oficial do Firebase Analytics ao aplicativo Android.
+- Mantidos Firebase Authentication e Cloud Firestore.
+- Mantido o plugin Google Services já configurado com o projeto Audio Tools.
+- Mantido o fluxo existente de Google Sign-In e sincronização de perfil.
+- O build continua a utilizar o Firebase BoM para manter versões compatíveis.
+
 ## 0.12.0 — Suporte por email
 
 ### Suporte

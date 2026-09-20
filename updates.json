@@ -1,6 +1,11 @@
 {
-  "version": "0.12.0",
+  "version": "0.13.0",
   "tools": [
+    {
+      "id": "v0.13.0-firebase-analytics",
+      "title": "Firebase Analytics",
+      "description": "Firebase Analytics SDK integrado no Audio Tools para ativar a recolha de eventos e relatórios do Google Analytics."
+    },
     {
       "id": "v0.12.0-support-email",
       "title": "Suporte por email",

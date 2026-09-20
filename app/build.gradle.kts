@@ -38,11 +38,11 @@ android {
         minSdk = 23
         targetSdk = 37
         versionCode = automaticVersionCode
-        versionName = "0.12.0"
+        versionName = "0.13.0"
         buildConfigField(
             "String",
             "PAYMENTS_BASE_URL",
-            "\"https://audio-tools.nexaurenstore.workers.dev\""
+            ""https://audio-tools.nexaurenstore.workers.dev""
         )
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -93,6 +93,7 @@ dependencies {
     implementation("com.google.android.material:material:1.14.0")
 
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
