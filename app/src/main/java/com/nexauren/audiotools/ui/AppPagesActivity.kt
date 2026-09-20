@@ -30,7 +30,7 @@ import com.nexauren.audiotools.R
 import com.nexauren.audiotools.catalog.AudioTool
 import com.nexauren.audiotools.catalog.ToolCatalog
 import com.nexauren.audiotools.payments.PaymentClient
-import com.nexauren.audiotools.support.SupportClient
+import com.nexauren.audiotools.support.SupportEmailComposer
 import java.io.File
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -1393,7 +1393,7 @@ class AppPagesActivity : ComponentActivity() {
         )
     }
 
-    // Support form: compile-validation touchpoint for the production release pipeline.
+    // Support form: opens the native email composer with account details.
     private fun buildSupport(
         root: LinearLayout
     ) {
@@ -1482,76 +1482,58 @@ class AppPagesActivity : ComponentActivity() {
             )
 
         sendButton.setOnClickListener {
-                    val s =
-                        subject.first.text
-                            .toString()
-                            .trim()
+            val subjectText =
+                subject.first.text
+                    .toString()
+                    .trim()
 
-                    val m =
-                        message.first.text
-                            .toString()
-                            .trim()
+            val messageText =
+                message.first.text
+                    .toString()
+                    .trim()
 
-                    if (
-                        s.isBlank() ||
-                        m.length < 5
-                    ) {
-                        Toast.makeText(
-                            this@AppPagesActivity,
-                            "Preenche o assunto e escreve uma mensagem um pouco mais completa.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@setOnClickListener
-                    }
+            if (
+                subjectText.isBlank() ||
+                messageText.length < 5
+            ) {
+                Toast.makeText(
+                    this@AppPagesActivity,
+                    "Preenche o assunto e escreve uma mensagem um pouco mais completa.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
 
-                    saveSupportRequest(
-                        s,
-                        m
-                    )
-
-                    sendButton.isEnabled =
-                        false
-                    sendButton.text =
-                        "A enviar…"
-
-                    networkExecutor.execute {
-                        runCatching {
-                            SupportClient.send(
-                                selectedSupportType,
-                                s,
-                                m
-                            )
-                        }.onSuccess {
-                            uiHandler.post {
-                                sendButton.isEnabled =
-                                    true
-                                sendButton.text =
-                                    "Enviar para o suporte"
-                                subject.first.setText("")
-                                message.first.setText("")
-
-                                Toast.makeText(
-                                    this@AppPagesActivity,
-                                    "Enviado com sucesso para o suporte.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }.onFailure { error ->
-                            uiHandler.post {
-                                sendButton.isEnabled =
-                                    true
-                                sendButton.text =
-                                    "Tentar novamente"
-
-                                Toast.makeText(
-                                    this@AppPagesActivity,
-                                    "Não foi possível enviar agora. O pedido ficou guardado neste dispositivo.",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
-                    }
+            runCatching {
+                SupportEmailComposer.open(
+                    this@AppPagesActivity,
+                    selectedSupportType,
+                    subjectText,
+                    messageText
+                )
+            }.onSuccess { opened ->
+                if (opened) {
+                    Toast.makeText(
+                        this@AppPagesActivity,
+                        "Email preparado. Confirma o envio no teu aplicativo de email.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        this@AppPagesActivity,
+                        "Não foi encontrado nenhum aplicativo de email neste dispositivo.",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
+            }.onFailure { error ->
+                Toast.makeText(
+                    this@AppPagesActivity,
+                    error.message
+                        ?: "Não foi possível abrir o aplicativo de email.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
         root.addView(sendButton)
 
@@ -1616,7 +1598,7 @@ class AppPagesActivity : ComponentActivity() {
                         addView(
                             ViewKit.subtitle(
                                 this@AppPagesActivity,
-                                "Os pedidos enviados pelo formulário são registados no backend e encaminhados para o email de atendimento."
+                                "Ao tocar em enviar, o Audio Tools abre o teu aplicativo de email com os dados da conta e a mensagem já preenchidos. Tu confirmas o envio."
                             )
                         )
                     }
@@ -2018,50 +2000,6 @@ class AppPagesActivity : ComponentActivity() {
         return field to card
     }
 
-    private fun saveSupportRequest(
-        subject: String,
-        message: String
-    ) {
-        val prefs =
-            getSharedPreferences(
-                "audio_tools_support",
-                MODE_PRIVATE
-            )
-
-        val existing =
-            prefs.getStringSet(
-                "requests",
-                emptySet()
-            )?.toMutableSet()
-                ?: mutableSetOf()
-
-        val user =
-            auth.currentUser
-
-        existing.add(
-            System.currentTimeMillis().toString() +
-                "|" +
-                selectedSupportType +
-                "|" +
-                (user?.uid ?: "") +
-                "|" +
-                (user?.email ?: "") +
-                "|" +
-                "v" +
-                com.nexauren.audiotools.BuildConfig.VERSION_NAME +
-                "|" +
-                subject +
-                "|" +
-                message
-        )
-
-        prefs.edit()
-            .putStringSet(
-                "requests",
-                existing
-            )
-            .apply()
-    }
 
     private fun editName() {
         val field =
